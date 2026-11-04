@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Junk Runner">
+<meta name="theme-color" content="#05060f">
+<title>Space Junk Runner</title>
+<style>
+  /* ============================================================
+     BASE / LAYOUT
+     ============================================================ */
+  :root {
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --accent: #4ff0ff;
+    --accent2: #ff4fd8;
+    --text: #e8f0ff;
+    --dim: #8c97b3;
+    --panel: rgba(10, 14, 30, 0.82);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #05060f; color: var(--text);
+    overflow: hidden; overscroll-behavior: none;
+    touch-action: none;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  #game {
+    position: fixed; inset: 0; width: 100%; height: 100%; display: block;
+    touch-action: none;
+  }
+
+  /* ============================================================
+     SCREENS (DOM overlays on top of the canvas)
+     ============================================================ */
+  .screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px;
+    padding: calc(var(--sat) + 20px) calc(var(--sar) + 20px) calc(var(--sab) + 20px) calc(var(--sal) + 20px);
+    background: rgba(5, 6, 15, 0.72);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    text-align: center;
+    overflow-y: auto;
+  }
+  .screen.hidden { display: none; }
+  /* centre content when it fits, scroll (instead of clipping) when it overflows */
+  .screen > :first-child { margin-top: auto; }
+  .screen > :last-child { margin-bottom: auto; }
+  h1 {
+    font-size: clamp(30px, 9vw, 48px); margin: 0 0 6px; letter-spacing: 2px;
+    color: #fff; text-shadow: 0 0 14px var(--accent), 0 0 30px rgba(79, 240, 255, 0.5);
+  }
+  h2 { font-size: clamp(24px, 7vw, 34px); margin: 0 0 6px; color: #fff; text-shadow: 0 0 12px var(--accent); }
+  .sub { color: var(--dim); font-size: 16px; margin: 0; }
+  .stats { display: flex; gap: 22px; margin: 6px 0 10px; }
+  .stat { display: flex; flex-direction: column; align-items: center; }
+  .stat b { font-size: 26px; color: #fff; }
+  .stat span { font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 230px; min-height: 60px; padding: 12px 24px;
+    font-size: 21px; font-weight: 600; letter-spacing: 1px;
+    color: #05060f; background: var(--accent);
+    border: 0; border-radius: 16px; cursor: pointer;
+    box-shadow: 0 0 18px rgba(79, 240, 255, 0.45);
+    touch-action: manipulation;
+  }
+  .btn:active { transform: scale(0.97); filter: brightness(1.15); }
+  .btn.secondary { background: transparent; color: var(--accent); border: 2px solid var(--accent); box-shadow: none; }
+  .btn.danger { background: transparent; color: #ff6b8a; border: 2px solid #ff6b8a; box-shadow: none; }
+  .btn.small { min-width: 120px; min-height: 48px; font-size: 17px; }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+
+  /* HUD */
+  #hud {
+    background: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+    justify-content: flex-start; align-items: stretch;
+    pointer-events: none;
+    padding: calc(var(--sat) + 10px) calc(var(--sar) + 12px) calc(var(--sab) + 10px) calc(var(--sal) + 12px);
+  }
+  #hud .row { margin: 0; display: flex; justify-content: space-between; align-items: center; width: 100%; }
+  #hearts { font-size: 26px; letter-spacing: 3px; color: #ff4f6e; text-shadow: 0 0 8px rgba(255, 79, 110, 0.8); }
+  #hearts .lost { color: rgba(255, 255, 255, 0.18); text-shadow: none; }
+  #hudCenter { text-align: center; }
+  #distance { font-size: 26px; font-weight: 700; color: #fff; text-shadow: 0 0 10px var(--accent); }
+  #runJunk { font-size: 15px; color: #9ff7ff; }
+  #pauseBtn {
+    pointer-events: auto; width: 56px; height: 56px; min-width: 0; min-height: 0; padding: 0;
+    border-radius: 14px; font-size: 24px; background: rgba(10, 14, 30, 0.7); color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.35); box-shadow: none;
+  }
+
+  /* Hangar */
+  #skinList { display: grid; grid-template-columns: repeat(2, minmax(140px, 170px)); gap: 12px; width: 100%; justify-content: center; }
+  .skin { background: var(--panel); border: 2px solid rgba(255, 255, 255, 0.12); border-radius: 16px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .skin.equipped { border-color: var(--accent); box-shadow: 0 0 14px rgba(79, 240, 255, 0.35); }
+  .skin canvas { width: 72px; height: 72px; }
+  .skin .name { font-weight: 700; font-size: 17px; }
+  .skin .price { font-size: 14px; color: var(--dim); }
+  .skin .btn { min-width: 0; width: 100%; min-height: 44px; font-size: 16px; padding: 6px; }
+  #hangar { gap: 8px; }
+  #hangar h2 { margin-bottom: 0; }
+
+  /* Settings */
+  .setting { width: min(360px, 100%); background: var(--panel); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .setting label { font-size: 17px; display: flex; justify-content: space-between; }
+  input[type=range] { width: 100%; height: 44px; -webkit-appearance: none; appearance: none; background: transparent; touch-action: pan-x; }
+  input[type=range]::-webkit-slider-runnable-track { height: 8px; background: #27304d; border-radius: 4px; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 34px; height: 34px; margin-top: -13px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+  input[type=range]::-moz-range-track { height: 8px; background: #27304d; border-radius: 4px; }
+  input[type=range]::-moz-range-thumb { width: 34px; height: 34px; border: 0; border-radius: 50%; background: var(--accent); }
+
+  /* Rotate notice + debug */
+  #rotate { z-index: 50; background: #05060f; font-size: 24px; }
+  #rotate .phone { width: 60px; height: 100px; border: 4px solid var(--accent); border-radius: 12px; animation: rot 1.6s ease-in-out infinite; }
+  @keyframes rot { 0%, 20% { transform: rotate(90deg); } 60%, 100% { transform: rotate(0deg); } }
+  #debug {
+    position: fixed; left: calc(var(--sal) + 6px); bottom: calc(var(--sab) + 6px); z-index: 60;
+    font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; color: #9f9; background: rgba(0, 0, 0, 0.6);
+    padding: 6px 8px; border-radius: 6px; white-space: pre; pointer-events: none;
+  }
+  #debug.hidden { display: none; }
+  .note { max-width: 360px; font-size: 16px; line-height: 1.45; color: var(--dim); }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<!-- HUD (visible during play / pause) -->
+<div id="hud" class="screen hidden">
+  <div class="row">
+    <div id="hearts"></div>
+    <div id="hudCenter"><div id="distance">0 m</div><div id="runJunk">⬡ 0</div></div>
+    <button id="pauseBtn" class="btn" aria-label="Pause">❚❚</button>
+  </div>
+</div>
+
+<!-- Main menu -->
+<div id="menu" class="screen">
+  <h1>SPACE JUNK<br>RUNNER</h1>
+  <p class="sub">Tilt to steer · auto-fire · collect junk</p>
+  <div class="stats">
+    <div class="stat"><b id="menuBest">0 m</b><span>Best</span></div>
+    <div class="stat"><b id="menuJunk">0</b><span>Junk</span></div>
+  </div>
+  <button class="btn" id="btnPlay">PLAY</button>
+  <button class="btn secondary" id="btnHangar">HANGAR</button>
+  <button class="btn secondary" id="btnSettings">SETTINGS</button>
+</div>
+
+<!-- Enable tilt (iOS permission explanation) -->
+<div id="enableTilt" class="screen hidden">
+  <h2>Enable tilt</h2>
+  <p class="note">This game is steered by tilting your phone left and right. Your phone will ask for permission to use the motion sensor — tap <b>Allow</b>.</p>
+  <p class="note" id="tiltDeniedNote" style="display:none;color:#ff6b8a">Tilt access was denied earlier. If no prompt appears, enable “Motion &amp; Orientation Access” in Settings → Safari, then reload.</p>
+  <button class="btn" id="btnEnableTilt">ENABLE TILT</button>
+  <button class="btn secondary" id="btnNoTilt">PLAY WITH TOUCH</button>
+</div>
+
+<!-- Pause -->
+<div id="pause" class="screen hidden">
+  <h2>PAUSED</h2>
+  <p class="sub" id="pauseHint"></p>
+  <button class="btn" id="btnResume">RESUME</button>
+  <button class="btn secondary" id="btnRecalibrate">RECALIBRATE</button>
+  <button class="btn danger" id="btnQuit">QUIT TO MENU</button>
+</div>
+
+<!-- Game over -->
+<div id="gameover" class="screen hidden">
+  <h2>GAME OVER</h2>
+  <div class="stats">
+    <div class="stat"><b id="goDistance">0 m</b><span>Distance</span></div>
+    <div class="stat"><b id="goJunk">0</b><span>Junk</span></div>
+    <div class="stat"><b id="goBest">0 m</b><span>Best</span></div>
+  </div>
+  <p class="sub" id="goNewBest" style="color:#ffd84f"></p>
+  <button class="btn" id="btnAgain">PLAY AGAIN</button>
+  <button class="btn secondary" id="btnGoMenu">MAIN MENU</button>
+</div>
+
+<!-- Hangar / shop -->
+<div id="hangar" class="screen hidden">
+  <h2>HANGAR</h2>
+  <p class="sub">Junk: <b id="hangarJunk">0</b></p>
+  <div id="skinList"></div>
+  <button class="btn secondary" id="btnHangarBack">BACK</button>
+</div>
+
+<!-- Settings -->
+<div id="settings" class="screen hidden">
+  <h2>SETTINGS</h2>
+  <div class="setting">
+    <label>Tilt sensitivity <span id="sensVal">1.0×</span></label>
+    <input type="range" id="sensSlider" min="0.5" max="2" step="0.1" value="1">
+  </div>
+  <div class="setting">
+    <label>Sound <span id="muteVal">On</span></label>
+    <button class="btn secondary small" id="btnMute">MUTE</button>
+  </div>
+  <p class="note" id="steerInfo"></p>
+  <button class="btn secondary" id="btnSettingsBack">BACK</button>
+</div>
+
+<!-- Landscape notice -->
+<div id="rotate" class="screen hidden">
+  <div class="phone"></div>
+  <p>Rotate your phone to portrait</p>
+</div>
+
+<div id="debug" class="hidden"></div>
+
+<script>
+'use strict';
+/* ====================================================================
+   SPACE JUNK RUNNER — Phase 1
+   Sections: CONFIG · UTIL · ASSETS · AUDIO · SAVE · INPUT/TILT ·
+             GAME STATE · SPAWNER · UPDATE · RENDER · UI/SCREENS · BOOT
+   Units: sizes are fractions of screen width (w), speeds are screen
+   heights per second (sh/s). Internally everything is converted to CSS px.
+   ==================================================================== */
+
+/* ====================================================================
+   CONFIG — every tuning value lives here
+   ==================================================================== */
+const CONFIG = {
+  ship: {
+    width: 0.10,        // w
+    yPos: 0.86,         // fraction of screen height (centre of ship)
+    lives: 3,
+    fireRate: 3,        // shots per second
+    invulnTime: 2,      // seconds of blinking invulnerability after a hit
+    hitbox: 0.8,        // circle diameter as fraction of sprite width
+    touchGain: 1.0,     // px of ship movement per px of finger drag (touch fallback)
+    keySpeed: 1.1,      // screen widths per second (keyboard fallback on desktop)
+    deathDelay: 1.2,    // seconds between final hit and the game-over screen
+  },
+  bullet: {
+    speed: 1.2,         // sh/s
+    damage: 1,
+    width: 0.014,       // w
+    hitbox: 0.8,
+    pool: 64,
+  },
+  asteroid: {
+    widths: [0.07, 0.11, 0.16],   // small, medium, large (w)
+    spawnRateStart: 1.0,          // per second
+    spawnRateMax: 2.5,            // per second (reached at world.rampDistance)
+    extraSpeed: [0.02, 0.12],     // sh/s added to scroll speed (random)
+    spinMax: 0.9,                 // rad/s (random, either direction)
+    hitbox: 0.8,
+    sizeWeights: [0.45, 0.35, 0.20],
+  },
+  enemy: {
+    hp: 3,
+    width: 0.11,                  // w
+    extraSpeed: 0.15,             // sh/s added to scroll speed
+    firstSpawn: [6, 10],          // seconds into the run
+    intervalStart: 9,             // average seconds between enemies at start
+    intervalMin: 4,               // never more than 1 per 4 s
+    weaveAmp: 0.09,               // w
+    weaveFreq: 0.9,               // Hz
+    junkDrop: 3,
+    hitbox: 0.8,
+    flashTime: 0.12,
+  },
+  junk: {
+    width: 0.05,                  // w
+    spawnInterval: [4, 6],        // seconds (random in range, ~5 s)
+    value: 1,
+    hitbox: 1.0,                  // slightly generous pickup
+    spin: 2.5,                    // rad/s
+    pool: 48,
+  },
+  world: {
+    scrollStart: 0.30,            // sh/s
+    scrollMax: 0.80,              // sh/s
+    rampDistance: 5000,           // metres at which difficulty / scroll are capped
+    metersPerScreen: 50,          // 1 screen height of scroll = 50 m
+    parallax: [0.15, 0.35, 0.70], // speed factor of the far / mid / near star layers
+    menuScroll: 0.08,             // sh/s background drift on menus
+  },
+  spawn: {
+    topBand: 0.30,                // fraction of H: obstacles in this band count for the "never block" check
+    laneWidth: 2.4,               // free lane must be at least this many ship widths
+    laneMargin: 0.6,              // ship widths added around each asteroid when checking lanes
+    tries: 10,                    // random x candidates before giving up a spawn
+  },
+  input: {
+    maxTilt: 25,                  // degrees of tilt that reaches the screen edge
+    deadZone: 2,                  // degrees
+    smoothing: 14,                // higher = snappier (exponential smoothing rate, 1/s)
+    sensitivityMin: 0.5,
+    sensitivityMax: 2.0,
+    sensitivityDefault: 1.0,
+  },
+  particles: { pool: 420 },
+  loop: { maxDt: 0.05, dprCap: 3 },
+  debug: new URLSearchParams(location.search).get('debug') === '1',
+};
+
+/* Skins — cosmetic only. Art keys point into the ASSETS manifest. */
+const SKINS = [
+  { id: 'scout',    name: 'Scout',    price: 0,   art: { ship: 'ship.scout',    bullet: '#8fd6ff', trail: '#4aa8ff' } },
+  { id: 'ember',    name: 'Ember',    price: 50,  art: { ship: 'ship.ember',    bullet: '#ffb14a', trail: 'fire' } },
+  { id: 'viridian', name: 'Viridian', price: 120, art: { ship: 'ship.viridian', bullet: '#b8ff3c', trail: '#4dff88' } },
+  { id: 'phantom',  name: 'Phantom',  price: 200, art: { ship: 'ship.phantom',  bullet: '#c58bff', trail: '#9b4dff' } },
+  { id: 'aurum',    name: 'Aurum',    price: 350, art: { ship: 'ship.aurum',    bullet: '#ffd84f', trail: '#ffb300' } },
+  { id: 'nova',     name: 'Nova',     price: 500, art: { ship: 'ship.nova',     bullet: '#ffffff', trail: 'rainbow' } },
+];
+
+/* ====================================================================
+   UTIL
+   ==================================================================== */
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const rand = (a, b) => a + Math.random() * (b - a);
+const TAU = Math.PI * 2;
+/** Deterministic PRNG (mulberry32) for reproducible procedural art. */
+function seededRandom(seed) {
+  let s = seed >>> 0;
+  return function () {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const $ = id => document.getElementById(id);
+
+/* ====================================================================
+   ASSETS — the only place that knows how things look.
+   Game code never draws a ship/asteroid/etc. directly; it calls
+   Assets.draw(key, ...). Each manifest entry is either
+     { type: 'procedural', draw: fn }
+     { type: 'image', src, frames, frameSize:{w,h}, anchor:{x,y}, fps }
+   Entity drawers:     draw(ctx, size, t, extra)   — centred at (0,0), 'size' = width in px
+   Background drawers: draw(ctx, W, H, scrollPx, t) — fills the screen
+   To replace any visual with artwork, change only its manifest entry, e.g.
+     'ship.scout': { type: 'image', src: 'art/ship_scout.png', frames: 4,
+                     frameSize: { w: 64, h: 80 }, anchor: { x: 0.5, y: 0.5 }, fps: 12 },
+   For backgrounds, image entries are tiled vertically and scrolled.
+   ==================================================================== */
+
+/** Ship drawer factory. palette: hull, hull2, wing, line, cockpit, glow (string or fn(t)). */
+function makeShipDrawer(p) {
+  return function (ctx, s, t) {
+    const h = s * 1.3;
+    const glow = typeof p.glow === 'function' ? p.glow(t) : p.glow;
+    const pulse = 0.85 + 0.15 * Math.sin(t * 22);
+    // engine glow
+    let g = ctx.createRadialGradient(0, h * 0.42, 0, 0, h * 0.42, s * 0.55 * pulse);
+    g.addColorStop(0, glow); g.addColorStop(0.35, glow); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = 0.9; ctx.fillStyle = g; ctx.fillRect(-s, -h * 0.1, s * 2, h); ctx.globalAlpha = 1;
+    // wings
+    ctx.fillStyle = p.wing; ctx.strokeStyle = p.line; ctx.lineWidth = Math.max(1, s * 0.03); ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.18, -h * 0.02); ctx.lineTo(-s * 0.5, h * 0.36); ctx.lineTo(-s * 0.36, h * 0.42); ctx.lineTo(-s * 0.14, h * 0.3);
+    ctx.lineTo(s * 0.14, h * 0.3); ctx.lineTo(s * 0.36, h * 0.42); ctx.lineTo(s * 0.5, h * 0.36); ctx.lineTo(s * 0.18, -h * 0.02);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // hull
+    g = ctx.createLinearGradient(-s * 0.2, 0, s * 0.2, 0);
+    g.addColorStop(0, p.hull2); g.addColorStop(0.5, p.hull); g.addColorStop(1, p.hull2);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(0, -h * 0.5); ctx.quadraticCurveTo(s * 0.22, -h * 0.1, s * 0.2, h * 0.32);
+    ctx.lineTo(s * 0.1, h * 0.4); ctx.lineTo(-s * 0.1, h * 0.4); ctx.lineTo(-s * 0.2, h * 0.32);
+    ctx.quadraticCurveTo(-s * 0.22, -h * 0.1, 0, -h * 0.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+    // cockpit
+    ctx.fillStyle = p.cockpit;
+    ctx.beginPath(); ctx.ellipse(0, -h * 0.12, s * 0.07, h * 0.12, 0, 0, TAU); ctx.fill();
+    // nozzle
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.ellipse(0, h * 0.4, s * 0.09, h * 0.035, 0, 0, TAU); ctx.fill();
+  };
+}
+
+/** Asteroid drawer factory: fixed random polygon shape + craters from a seed. */
+function makeAsteroidDrawer(seed) {
+  const rnd = seededRandom(seed);
+  const n = 9 + Math.floor(rnd() * 5);
+  const verts = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * TAU;
+    const r = 0.36 + rnd() * 0.14;
+    verts.push([Math.cos(a) * r, Math.sin(a) * r]);
+  }
+  const craters = [];
+  for (let i = 0; i < 3; i++) craters.push([rand2(rnd, -0.22, 0.22), rand2(rnd, -0.22, 0.22), 0.05 + rnd() * 0.08]);
+  function rand2(r, a, b) { return a + r() * (b - a); }
+  return function (ctx, s) {
+    const g = ctx.createRadialGradient(-s * 0.15, -s * 0.15, s * 0.05, 0, 0, s * 0.55);
+    g.addColorStop(0, '#8d93a3'); g.addColorStop(0.6, '#4a4f5e'); g.addColorStop(1, '#23262f');
+    ctx.fillStyle = g; ctx.strokeStyle = '#b6bccc'; ctx.lineWidth = Math.max(1, s * 0.025); ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < verts.length; i++) { const v = verts[i]; if (i === 0) ctx.moveTo(v[0] * s, v[1] * s); else ctx.lineTo(v[0] * s, v[1] * s); }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    for (const c of craters) { ctx.beginPath(); ctx.arc(c[0] * s, c[1] * s, c[2] * s, 0, TAU); ctx.fill(); }
+  };
+}
+
+function drawEnemy(ctx, s, t, extra) {
+  const h = s * 1.2;
+  const pulse = 0.85 + 0.15 * Math.sin(t * 18);
+  // thruster glow (enemy flies downward, engine at top)
+  let g = ctx.createRadialGradient(0, -h * 0.4, 0, 0, -h * 0.4, s * 0.5 * pulse);
+  g.addColorStop(0, '#ff4fd8'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.globalAlpha = 0.85; ctx.fillStyle = g; ctx.fillRect(-s, -h, s * 2, h); ctx.globalAlpha = 1;
+  ctx.strokeStyle = '#ffb3e6'; ctx.lineWidth = Math.max(1, s * 0.03); ctx.lineJoin = 'round';
+  // wings (swept)
+  ctx.fillStyle = '#5a0f2a';
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.15, -h * 0.25); ctx.lineTo(-s * 0.5, -h * 0.4); ctx.lineTo(-s * 0.42, h * 0.1); ctx.lineTo(-s * 0.12, h * 0.05);
+  ctx.lineTo(s * 0.12, h * 0.05); ctx.lineTo(s * 0.42, h * 0.1); ctx.lineTo(s * 0.5, -h * 0.4); ctx.lineTo(s * 0.15, -h * 0.25);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  // hull (pointing down)
+  g = ctx.createLinearGradient(-s * 0.2, 0, s * 0.2, 0);
+  g.addColorStop(0, '#9c1b45'); g.addColorStop(0.5, '#ff3b6b'); g.addColorStop(1, '#9c1b45');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(0, h * 0.5); ctx.quadraticCurveTo(s * 0.24, h * 0.1, s * 0.2, -h * 0.35);
+  ctx.lineTo(-s * 0.2, -h * 0.35); ctx.quadraticCurveTo(-s * 0.24, h * 0.1, 0, h * 0.5);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  // "eye"
+  ctx.fillStyle = '#fff0f8';
+  ctx.beginPath(); ctx.ellipse(0, h * 0.12, s * 0.08, h * 0.1, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#ff4fd8';
+  ctx.beginPath(); ctx.arc(0, h * 0.14, s * 0.04, 0, TAU); ctx.fill();
+  // hit flash
+  if (extra && extra.flash > 0) {
+    ctx.globalAlpha = clamp(extra.flash, 0, 1);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.5); ctx.lineTo(s * 0.5, -h * 0.4); ctx.lineTo(-s * 0.5, -h * 0.4); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawJunk(ctx, s) {
+  const r = s * 0.5, ri = s * 0.36, teeth = 8;
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 1.6);
+  g.addColorStop(0, 'rgba(126,232,250,0.55)'); g.addColorStop(1, 'rgba(126,232,250,0)');
+  ctx.fillStyle = g; ctx.fillRect(-r * 1.6, -r * 1.6, r * 3.2, r * 3.2);
+  ctx.fillStyle = '#7ee8fa'; ctx.strokeStyle = '#e6fdff'; ctx.lineWidth = Math.max(1, s * 0.05);
+  ctx.beginPath();
+  for (let i = 0; i < teeth * 2; i++) {
+    const a = (i / (teeth * 2)) * TAU, rr = i % 2 ? ri : r;
+    if (i === 0) ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); else ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#0b2a33';
+  ctx.beginPath(); ctx.arc(0, 0, s * 0.14, 0, TAU); ctx.fill();
+}
+
+function drawBullet(ctx, s, t, extra) {
+  const color = (extra && extra.color) || '#8fd6ff';
+  const h = s * 2.8;
+  ctx.globalAlpha = 0.45; ctx.fillStyle = color;
+  ctx.beginPath(); ctx.ellipse(0, 0, s * 1.3, h * 0.7, 0, 0, TAU); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.beginPath(); ctx.ellipse(0, 0, s * 0.5, h * 0.5, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.ellipse(0, -h * 0.1, s * 0.22, h * 0.3, 0, 0, TAU); ctx.fill();
+}
+
+/** Starfield layer factory. cfg: count, size[min,max], alpha, seed, nebula(bool), color */
+function makeStarLayer(cfg) {
+  const rnd = seededRandom(cfg.seed);
+  const stars = [];
+  for (let i = 0; i < cfg.count; i++) stars.push({ x: rnd(), y: rnd(), s: cfg.size[0] + rnd() * (cfg.size[1] - cfg.size[0]), tw: rnd() * TAU, a: 0.5 + rnd() * 0.5 });
+  const blobs = [];
+  if (cfg.nebula) for (let i = 0; i < 4; i++) blobs.push({ x: rnd(), y: rnd(), r: 0.25 + rnd() * 0.3, hue: 190 + rnd() * 120 });
+  return function (ctx, W, H, scroll, t) {
+    if (cfg.nebula) {
+      for (const b of blobs) {
+        const y = ((b.y * H + scroll) % H + H) % H;
+        for (const yy of [y, y - H]) {
+          const g = ctx.createRadialGradient(b.x * W, yy, 0, b.x * W, yy, b.r * W);
+          g.addColorStop(0, `hsla(${b.hue},80%,60%,0.10)`); g.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = g; ctx.fillRect(b.x * W - b.r * W, yy - b.r * W, b.r * W * 2, b.r * W * 2);
+        }
+      }
+    }
+    ctx.fillStyle = cfg.color;
+    for (const st of stars) {
+      const y = ((st.y * H + scroll) % H + H) % H;
+      const a = cfg.alpha * st.a * (0.75 + 0.25 * Math.sin(t * 2 + st.tw));
+      ctx.globalAlpha = a;
+      const sz = st.s * (W / 400);
+      ctx.fillRect(st.x * W - sz / 2, y - sz / 2, sz, sz);
+    }
+    ctx.globalAlpha = 1;
+  };
+}
+
+const rainbow = t => `hsl(${(t * 120) % 360},100%,60%)`;
+
+const ASSETS = {
+  // ---- ships ----
+  'ship.scout':    { type: 'procedural', draw: makeShipDrawer({ hull: '#ffffff', hull2: '#c9d6ea', wing: '#aebfd8', line: '#dfe9ff', cockpit: '#2d7dff', glow: '#4aa8ff' }) },
+  'ship.ember':    { type: 'procedural', draw: makeShipDrawer({ hull: '#ff7a3d', hull2: '#c6301a', wing: '#8f1d12', line: '#ffb38a', cockpit: '#ffe08a', glow: '#ff5a1f' }) },
+  'ship.viridian': { type: 'procedural', draw: makeShipDrawer({ hull: '#4dff88', hull2: '#1c9a4a', wing: '#146634', line: '#b8ff3c', cockpit: '#eaffb0', glow: '#8cff3c' }) },
+  'ship.phantom':  { type: 'procedural', draw: makeShipDrawer({ hull: '#4b2a8a', hull2: '#241247', wing: '#1a0d36', line: '#b07cff', cockpit: '#e6ccff', glow: '#9b4dff' }) },
+  'ship.aurum':    { type: 'procedural', draw: makeShipDrawer({ hull: '#ffd84f', hull2: '#c7930f', wing: '#8a6208', line: '#fff1b0', cockpit: '#fff8dc', glow: '#ffb300' }) },
+  'ship.nova':     { type: 'procedural', draw: makeShipDrawer({ hull: '#f2f5fa', hull2: '#9aa5b8', wing: '#6e7a90', line: '#ffffff', cockpit: '#1a1f2e', glow: rainbow }) },
+  // ---- obstacles / pickups / projectiles ----
+  'asteroid.small':  { type: 'procedural', draw: makeAsteroidDrawer(11) },
+  'asteroid.medium': { type: 'procedural', draw: makeAsteroidDrawer(23) },
+  'asteroid.large':  { type: 'procedural', draw: makeAsteroidDrawer(47) },
+  'enemy':  { type: 'procedural', draw: drawEnemy },
+  'junk':   { type: 'procedural', draw: drawJunk },
+  'bullet': { type: 'procedural', draw: drawBullet },
+  // ---- background (3 parallax layers) ----
+  'background.far':  { type: 'procedural', draw: makeStarLayer({ count: 90, size: [1, 1.6], alpha: 0.55, seed: 101, nebula: true, color: '#cfd8ff' }) },
+  'background.mid':  { type: 'procedural', draw: makeStarLayer({ count: 55, size: [1.6, 2.4], alpha: 0.8, seed: 202, nebula: false, color: '#e8efff' }) },
+  'background.near': { type: 'procedural', draw: makeStarLayer({ count: 25, size: [2.4, 3.6], alpha: 1.0, seed: 303, nebula: false, color: '#ffffff' }) },
+  // ---- example of an image entry (artwork replacement) ----
+  // 'junk': { type: 'image', src: 'art/junk.png', frames: 6, frameSize: { w: 32, h: 32 }, anchor: { x: 0.5, y: 0.5 }, fps: 10 },
+};
+
+const Assets = {
+  images: {},
+  /** Load every image-type entry. Resolves when all are loaded (or failed). */
+  init() {
+    const jobs = [];
+    for (const key in ASSETS) {
+      const e = ASSETS[key];
+      if (e.type !== 'image') continue;
+      jobs.push(new Promise(res => {
+        const img = new Image();
+        img.onload = () => { this.images[key] = img; res(); };
+        img.onerror = () => { console.warn('Asset failed to load:', key, e.src); res(); };
+        img.src = e.src;
+      }));
+    }
+    return Promise.all(jobs);
+  },
+  /** Draw an entity asset centred at (x, y) with the given width (px), rotation and time. */
+  draw(ctx, key, x, y, w, rot, t, extra) {
+    const e = ASSETS[key];
+    if (!e) return;
+    ctx.save();
+    ctx.translate(x, y);
+    if (rot) ctx.rotate(rot);
+    if (e.type === 'procedural') {
+      e.draw(ctx, w, t || 0, extra);
+    } else if (e.type === 'image') {
+      const img = this.images[key];
+      if (img) {
+        const fw = e.frameSize ? e.frameSize.w : img.width, fh = e.frameSize ? e.frameSize.h : img.height;
+        const frames = e.frames || 1, fps = e.fps || 10;
+        const frame = frames > 1 ? Math.floor((t || 0) * fps) % frames : 0;
+        const perRow = Math.max(1, Math.floor(img.width / fw));
+        const sx = (frame % perRow) * fw, sy = Math.floor(frame / perRow) * fh;
+        const dh = w * fh / fw;
+        const ax = e.anchor ? e.anchor.x : 0.5, ay = e.anchor ? e.anchor.y : 0.5;
+        ctx.drawImage(img, sx, sy, fw, fh, -w * ax, -dh * ay, w, dh);
+      }
+    }
+    ctx.restore();
+  },
+  /** Draw a full-screen background layer with a vertical scroll offset (px). */
+  drawBackground(ctx, key, W, H, scroll, t) {
+    const e = ASSETS[key];
+    if (!e) return;
+    if (e.type === 'procedural') { e.draw(ctx, W, H, scroll, t); return; }
+    const img = this.images[key];
+    if (!img) return;
+    const dh = W * img.height / img.width;              // scale image to screen width
+    let y = ((scroll % dh) + dh) % dh - dh;             // tile vertically
+    for (; y < H; y += dh) ctx.drawImage(img, 0, y, W, dh);
+  },
+};
+
+/* ====================================================================
+   AUDIO — Web Audio SFX through a manifest. Entry types:
+     { type: 'procedural', play: fn(ac, out) }   (synthesised)
+     { type: 'file', src: 'sfx/shoot.mp3' }      (decoded on unlock)
+   Audio context is created on the first user tap (Sfx.unlock).
+   ==================================================================== */
+const SOUNDS = {
+  shoot: { type: 'procedural', play(ac, out) {
+    const o = ac.createOscillator(), g = ac.createGain(); o.type = 'square';
+    o.frequency.setValueAtTime(880, ac.currentTime); o.frequency.exponentialRampToValueAtTime(220, ac.currentTime + 0.08);
+    g.gain.setValueAtTime(0.08, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.09);
+    o.connect(g).connect(out); o.start(); o.stop(ac.currentTime + 0.1);
+  } },
+  enemyHit: { type: 'procedural', play(ac, out) {
+    const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(320, ac.currentTime); o.frequency.exponentialRampToValueAtTime(120, ac.currentTime + 0.07);
+    g.gain.setValueAtTime(0.12, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.08);
+    o.connect(g).connect(out); o.start(); o.stop(ac.currentTime + 0.09);
+  } },
+  explosion: { type: 'procedural', play(ac, out) {
+    const n = Sfx.noiseSource(ac), f = ac.createBiquadFilter(), g = ac.createGain();
+    f.type = 'lowpass'; f.frequency.setValueAtTime(2200, ac.currentTime); f.frequency.exponentialRampToValueAtTime(120, ac.currentTime + 0.45);
+    g.gain.setValueAtTime(0.5, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.5);
+    n.connect(f).connect(g).connect(out); n.start(); n.stop(ac.currentTime + 0.5);
+  } },
+  pickup: { type: 'procedural', play(ac, out) {
+    [[880, 0], [1320, 0.07]].forEach(([fq, d]) => {
+      const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.value = fq;
+      g.gain.setValueAtTime(0.0001, ac.currentTime + d); g.gain.linearRampToValueAtTime(0.14, ac.currentTime + d + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + d + 0.12);
+      o.connect(g).connect(out); o.start(ac.currentTime + d); o.stop(ac.currentTime + d + 0.13);
+    });
+  } },
+  shipHit: { type: 'procedural', play(ac, out) {
+    const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(220, ac.currentTime); o.frequency.exponentialRampToValueAtTime(50, ac.currentTime + 0.35);
+    g.gain.setValueAtTime(0.25, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.4);
+    o.connect(g).connect(out); o.start(); o.stop(ac.currentTime + 0.4);
+    const n = Sfx.noiseSource(ac), ng = ac.createGain();
+    ng.gain.setValueAtTime(0.25, ac.currentTime); ng.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.25);
+    n.connect(ng).connect(out); n.start(); n.stop(ac.currentTime + 0.25);
+  } },
+  gameOver: { type: 'procedural', play(ac, out) {
+    [[440, 0], [330, 0.22], [220, 0.44]].forEach(([fq, d]) => {
+      const o = ac.createOscillator(), g = ac.createGain(); o.type = 'triangle'; o.frequency.value = fq;
+      g.gain.setValueAtTime(0.0001, ac.currentTime + d); g.gain.linearRampToValueAtTime(0.2, ac.currentTime + d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + d + 0.4);
+      o.connect(g).connect(out); o.start(ac.currentTime + d); o.stop(ac.currentTime + d + 0.42);
+    });
+  } },
+  // example file entry: shoot: { type: 'file', src: 'sfx/shoot.mp3' },
+};
+
+const Sfx = {
+  ac: null, master: null, muted: false, buffers: {}, _noise: null,
+  /** Create/resume the AudioContext. Must be called from a user gesture. */
+  unlock() {
+    try {
+      if (!this.ac) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        this.ac = new AC();
+        this.master = this.ac.createGain();
+        this.master.gain.value = this.muted ? 0 : 1;
+        this.master.connect(this.ac.destination);
+        this.loadFiles();
+      }
+      if (this.ac.state === 'suspended') this.ac.resume();
+    } catch (e) { console.warn('Audio unavailable', e); }
+  },
+  loadFiles() {
+    for (const key in SOUNDS) {
+      const s = SOUNDS[key];
+      if (s.type !== 'file') continue;
+      fetch(s.src).then(r => r.arrayBuffer()).then(b => this.ac.decodeAudioData(b)).then(buf => { this.buffers[key] = buf; }).catch(e => console.warn('SFX failed', key, e));
+    }
+  },
+  noiseSource(ac) {
+    if (!this._noise) {
+      const len = ac.sampleRate * 0.6, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      this._noise = buf;
+    }
+    const src = ac.createBufferSource(); src.buffer = this._noise; return src;
+  },
+  setMuted(m) { this.muted = m; if (this.master) this.master.gain.value = m ? 0 : 1; },
+  play(key) {
+    if (!this.ac || this.muted) return;
+    const s = SOUNDS[key]; if (!s) return;
+    try {
+      if (s.type === 'procedural') s.play(this.ac, this.master);
+      else if (this.buffers[key]) { const src = this.ac.createBufferSource(); src.buffer = this.buffers[key]; src.connect(this.master); src.start(); }
+    } catch (e) { /* never let audio break the game */ }
+  },
+};
+
+/* ====================================================================
+   SAVE — one versioned record. Storage backend is isolated in
+   `StorageBackend` so localStorage can be swapped for Capacitor
+   Preferences by replacing that one object.
+   ==================================================================== */
+const SAVE_VERSION = 1;
+const StorageBackend = {
+  KEY: 'spaceJunkRunner.save',
+  read() { try { return localStorage.getItem(this.KEY); } catch (e) { return null; } },
+  write(str) { try { localStorage.setItem(this.KEY, str); return true; } catch (e) { return false; } },
+};
+const Save = {
+  data: null,
+  defaults() {
+    return {
+      version: SAVE_VERSION,
+      junk: 0,
+      owned: ['scout'],
+      equipped: 'scout',
+      best: 0,
+      settings: { sensitivity: CONFIG.input.sensitivityDefault, muted: false },
+      tiltPermission: 'unknown',   // 'unknown' | 'granted' | 'denied'
+    };
+  },
+  load() {
+    const d = this.defaults();
+    try {
+      const raw = StorageBackend.read();
+      if (raw) {
+        const s = JSON.parse(raw);
+        // migrate older versions here when SAVE_VERSION changes
+        if (typeof s.junk === 'number') d.junk = s.junk;
+        if (Array.isArray(s.owned)) d.owned = s.owned.filter(id => SKINS.some(k => k.id === id));
+        if (!d.owned.includes('scout')) d.owned.unshift('scout');
+        if (typeof s.equipped === 'string' && d.owned.includes(s.equipped)) d.equipped = s.equipped;
+        if (typeof s.best === 'number') d.best = s.best;
+        if (s.settings) {
+          if (typeof s.settings.sensitivity === 'number') d.settings.sensitivity = clamp(s.settings.sensitivity, CONFIG.input.sensitivityMin, CONFIG.input.sensitivityMax);
+          if (typeof s.settings.muted === 'boolean') d.settings.muted = s.settings.muted;
+        }
+        if (typeof s.tiltPermission === 'string') d.tiltPermission = s.tiltPermission;
+      }
+    } catch (e) { console.warn('Save corrupt, using defaults', e); }
+    this.data = d;
+    return d;
+  },
+  save() { try { this.data.version = SAVE_VERSION; return StorageBackend.write(JSON.stringify(this.data)); } catch (e) { return false; } },
+};
+
+/* ====================================================================
+   INPUT / TILT — deviceorientation steering with calibration, dead
+   zone, smoothing and sensitivity. Fallback: horizontal touch drag
+   (and arrow keys on desktop).
+   ==================================================================== */
+const Input = {
+  hasTilt: false,          // true once a real orientation event with gamma arrived
+  listening: false,
+  rawGamma: null,          // last raw gamma (deg)
+  zero: 0,                 // calibrated neutral angle
+  pendingCalibrate: true,
+  target: 0, axis: 0,      // target / smoothed axis in [-1, 1]
+  touchDelta: 0,           // accumulated horizontal drag (px) since last update
+  keyAxis: 0,
+  _dragging: false, _lastX: 0,
+  get mode() { return this.hasTilt ? 'tilt' : 'touch'; },
+  needsPermission() { return typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'; },
+  /** iOS 13+: must be called from a user gesture. Resolves to true when granted. */
+  async requestPermission() {
+    if (!this.needsPermission()) { this.listen(); return true; }
+    let result = 'denied';
+    try { result = await DeviceOrientationEvent.requestPermission(); } catch (e) { result = 'denied'; }
+    Save.data.tiltPermission = result === 'granted' ? 'granted' : 'denied';
+    Save.save();
+    if (result === 'granted') this.listen();
+    return result === 'granted';
+  },
+  listen() {
+    if (this.listening) return;
+    this.listening = true;
+    window.addEventListener('deviceorientation', e => {
+      if (e.gamma === null || e.gamma === undefined) return;
+      this.hasTilt = true;
+      this.rawGamma = e.gamma;
+      if (this.pendingCalibrate) { this.zero = e.gamma; this.pendingCalibrate = false; }
+    }, true);
+  },
+  /** Take the current tilt as the neutral position. */
+  calibrate() {
+    if (this.rawGamma !== null) { this.zero = this.rawGamma; this.pendingCalibrate = false; }
+    else this.pendingCalibrate = true;
+    this.axis = 0; this.target = 0;
+  },
+  calibratedAngle() { return this.rawGamma === null ? 0 : this.rawGamma - this.zero; },
+  update(dt) {
+    const c = CONFIG.input;
+    if (this.hasTilt) {
+      const a = this.calibratedAngle();
+      const mag = Math.abs(a);
+      let v = 0;
+      if (mag > c.deadZone) v = Math.sign(a) * (mag - c.deadZone) / (c.maxTilt - c.deadZone);
+      this.target = clamp(v * Save.data.settings.sensitivity, -1, 1);
+      const k = 1 - Math.exp(-dt * c.smoothing);
+      this.axis += (this.target - this.axis) * k;
+    } else {
+      this.axis = this.keyAxis;
+    }
+  },
+  consumeTouchDelta() { const d = this.touchDelta; this.touchDelta = 0; return d; },
+  initTouch(canvas) {
+    canvas.addEventListener('pointerdown', e => { this._dragging = true; this._lastX = e.clientX; try { canvas.setPointerCapture(e.pointerId); } catch (_) {} });
+    canvas.addEventListener('pointermove', e => { if (!this._dragging) return; this.touchDelta += e.clientX - this._lastX; this._lastX = e.clientX; });
+    const end = () => { this._dragging = false; };
+    canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
+    window.addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'a') this.keyAxis = -1; if (e.key === 'ArrowRight' || e.key === 'd') this.keyAxis = 1; });
+    window.addEventListener('keyup', e => { if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) this.keyAxis = 0; });
+  },
+};
+
+/* ====================================================================
+   GAME STATE
+   ==================================================================== */
+const canvas = $('game');
+const ctx = canvas.getContext('2d');
+let W = 1, H = 1, DPR = 1;
+
+const G = {
+  state: 'menu',           // menu | enableTilt | play | pause | gameover | hangar | settings
+  pausedByLandscape: false,
+  time: 0,                 // run time (s)
+  distance: 0,             // metres
+  scroll: 0,               // current scroll speed (px/s)
+  bgScroll: 0,             // background scroll offset (px) — keeps drifting on menus
+  lives: 0,
+  runJunk: 0,
+  ship: { x: 0, y: 0, w: 0, invuln: 0, fireTimer: 0, dead: false, deathTimer: 0 },
+  skin: SKINS[0],
+  bullets: [], asteroids: [], enemies: [], junk: [], particles: [],
+  spawn: { asteroidTimer: 0, enemyTimer: 0, enemyWait: 0, junkTimer: 0 },
+  bestAtStart: 0,
+};
+
+/* Object pools — bullets, junk and particles are pre-allocated and recycled. */
+function makePool(n, factory) { const a = []; for (let i = 0; i < n; i++) a.push(Object.assign(factory(), { active: false })); return a; }
+function takeFromPool(pool) { for (let i = 0; i < pool.length; i++) if (!pool[i].active) { pool[i].active = true; return pool[i]; } return null; }
+G.bullets   = makePool(CONFIG.bullet.pool,    () => ({ x: 0, y: 0, w: 0 }));
+G.junk      = makePool(CONFIG.junk.pool,      () => ({ x: 0, y: 0, w: 0, vx: 0, vy: 0, rot: 0 }));
+G.particles = makePool(CONFIG.particles.pool, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 0, size: 0, color: '', ring: false }));
+
+function difficulty() { return clamp(G.distance / CONFIG.world.rampDistance, 0, 1); }
+function currentSkin() { return SKINS.find(s => s.id === Save.data.equipped) || SKINS[0]; }
+
+function resetRun() {
+  G.time = 0; G.distance = 0; G.runJunk = 0; G.lives = CONFIG.ship.lives;
+  G.ship.x = W / 2; G.ship.y = H * CONFIG.ship.yPos; G.ship.w = W * CONFIG.ship.width;
+  G.ship.invuln = 0; G.ship.fireTimer = 0; G.ship.dead = false; G.ship.deathTimer = 0;
+  G.skin = currentSkin();
+  G.asteroids.length = 0; G.enemies.length = 0;
+  for (const p of G.bullets) p.active = false;
+  for (const p of G.junk) p.active = false;
+  for (const p of G.particles) p.active = false;
+  G.spawn.asteroidTimer = 0.6;
+  G.spawn.enemyTimer = rand(CONFIG.enemy.firstSpawn[0], CONFIG.enemy.firstSpawn[1]);
+  G.spawn.junkTimer = rand(CONFIG.junk.spawnInterval[0], CONFIG.junk.spawnInterval[1]);
+  G.bestAtStart = Save.data.best;
+  Input.calibrate();
+  Input.consumeTouchDelta();
+  UI.updateHud(true);
+}
+
+function startRun() {
+  resetRun();
+  G.pausedByLandscape = false;
+  UI.show('play');
+  if (UI.isLandscape()) UI.setLandscape(true);
+}
+
+function endRun() {
+  Sfx.play('gameOver');
+  const d = Math.floor(G.distance);
+  let newBest = false;
+  if (d > Save.data.best) { Save.data.best = d; newBest = true; }
+  Save.save();
+  $('goDistance').textContent = d + ' m';
+  $('goJunk').textContent = G.runJunk;
+  $('goBest').textContent = Save.data.best + ' m';
+  $('goNewBest').textContent = newBest ? 'NEW BEST!' : '';
+  UI.show('gameover');
+}
+
+/* ====================================================================
+   SPAWNER — never blocks the player: there is always a free lane of
+   at least spawn.laneWidth ship widths among the asteroids in the top
+   band, and junk / enemies never spawn on top of asteroids.
+   ==================================================================== */
+function topBandAsteroids() { return G.asteroids.filter(a => a.y < H * CONFIG.spawn.topBand); }
+
+/** True if the intervals (sorted, merged) leave a gap >= laneW within [0, W]. */
+function hasFreeLane(intervals, laneW) {
+  intervals.sort((a, b) => a[0] - b[0]);
+  let cursor = 0;
+  for (const [s, e] of intervals) {
+    if (s - cursor >= laneW) return true;
+    if (e > cursor) cursor = e;
+  }
+  return W - cursor >= laneW;
+}
+
+function spawnAsteroid() {
+  const c = CONFIG.asteroid, sp = CONFIG.spawn;
+  // pick size by weight
+  let r = Math.random(), idx = 0;
+  for (let i = 0; i < c.sizeWeights.length; i++) { r -= c.sizeWeights[i]; if (r <= 0) { idx = i; break; } idx = i; }
+  const w = W * c.widths[idx];
+  const margin = G.ship.w * sp.laneMargin, laneW = G.ship.w * sp.laneWidth;
+  const band = topBandAsteroids();
+  for (let t = 0; t < sp.tries; t++) {
+    const x = rand(w * 0.5, W - w * 0.5);
+    const intervals = band.map(a => [a.x - a.w / 2 - margin, a.x + a.w / 2 + margin]);
+    intervals.push([x - w / 2 - margin, x + w / 2 + margin]);
+    if (!hasFreeLane(intervals, laneW)) continue;
+    // avoid overlapping another asteroid at spawn height
+    if (band.some(a => a.y < w && Math.hypot(a.x - x, a.y - (-w)) < (a.w + w) * 0.55)) continue;
+    G.asteroids.push({
+      x, y: -w, w, key: ['asteroid.small', 'asteroid.medium', 'asteroid.large'][idx],
+      rot: rand(0, TAU), spin: rand(-c.spinMax, c.spinMax), extra: rand(c.extraSpeed[0], c.extraSpeed[1]) * H,
+    });
+    return true;
+  }
+  return false;
+}
+
+/** Is a spawn position clear of asteroids near the top? */
+function clearOfAsteroids(x, y, w) {
+  return !G.asteroids.some(a => a.y < H * 0.5 && Math.hypot(a.x - x, a.y - y) < (a.w + w) * 0.6 + G.ship.w * 0.3);
+}
+
+function spawnEnemy() {
+  const c = CONFIG.enemy, w = W * c.width;
+  for (let t = 0; t < CONFIG.spawn.tries; t++) {
+    const x = rand(w * 0.6 + W * c.weaveAmp, W - w * 0.6 - W * c.weaveAmp);
+    if (!clearOfAsteroids(x, -w, w)) continue;
+    G.enemies.push({ x, baseX: x, y: -w, w, hp: c.hp, phase: rand(0, TAU), flash: 0, t: 0 });
+    return true;
+  }
+  return false;
+}
+
+function spawnJunk(x, y, vx, vy) {
+  const j = takeFromPool(G.junk); if (!j) return false;
+  j.x = x; j.y = y; j.w = W * CONFIG.junk.width; j.vx = vx || 0; j.vy = vy || 0; j.rot = rand(0, TAU);
+  return true;
+}
+
+function spawnRandomJunk() {
+  const w = W * CONFIG.junk.width;
+  for (let t = 0; t < CONFIG.spawn.tries; t++) {
+    const x = rand(w, W - w);
+    if (!clearOfAsteroids(x, -w, w)) continue;
+    return spawnJunk(x, -w, 0, 0);
+  }
+  return false;
+}
+
+function updateSpawner(dt) {
+  const d = difficulty(), s = G.spawn;
+  // asteroids
+  s.asteroidTimer -= dt;
+  if (s.asteroidTimer <= 0) {
+    const rate = lerp(CONFIG.asteroid.spawnRateStart, CONFIG.asteroid.spawnRateMax, d);
+    spawnAsteroid();
+    s.asteroidTimer = (1 / rate) * rand(0.6, 1.4);
+  }
+  // enemies
+  s.enemyTimer -= dt;
+  if (s.enemyTimer <= 0) {
+    if (spawnEnemy()) {
+      const avg = lerp(CONFIG.enemy.intervalStart, CONFIG.enemy.intervalMin, d);
+      s.enemyTimer = Math.max(CONFIG.enemy.intervalMin, avg * rand(0.8, 1.3));
+    } else s.enemyTimer = 0.5; // blocked by asteroids — retry shortly
+  }
+  // loose junk
+  s.junkTimer -= dt;
+  if (s.junkTimer <= 0) {
+    if (spawnRandomJunk()) s.junkTimer = rand(CONFIG.junk.spawnInterval[0], CONFIG.junk.spawnInterval[1]);
+    else s.junkTimer = 0.4;
+  }
+}
+
+/* ====================================================================
+   PARTICLES / EFFECTS
+   ==================================================================== */
+function emitParticle(x, y, vx, vy, life, size, color, ring) {
+  const p = takeFromPool(G.particles); if (!p) return;
+  p.x = x; p.y = y; p.vx = vx; p.vy = vy; p.life = life; p.max = life; p.size = size; p.color = color; p.ring = !!ring;
+}
+function explosion(x, y, color, count, size) {
+  for (let i = 0; i < count; i++) {
+    const a = rand(0, TAU), sp = rand(0.1, 0.6) * W;
+    emitParticle(x, y, Math.cos(a) * sp, Math.sin(a) * sp, rand(0.3, 0.7), rand(0.3, 1) * size, i % 3 === 0 ? '#ffffff' : color, false);
+  }
+  emitParticle(x, y, 0, 0, 0.35, size * 4, color, true);
+}
+function trailColor(skin, t) {
+  const tr = skin.art.trail;
+  if (tr === 'rainbow') return rainbow(t);
+  if (tr === 'fire') return Math.random() < 0.5 ? '#ff5a1f' : '#ffb14a';
+  return tr;
+}
+
+/* ====================================================================
+   UPDATE
+   ==================================================================== */
+function hitShip() {
+  const sh = G.ship;
+  if (sh.invuln > 0 || sh.dead) return;
+  G.lives--;
+  Sfx.play('shipHit');
+  explosion(sh.x, sh.y, '#ff6b3d', 18, sh.w * 0.25);
+  if (G.lives <= 0) { sh.dead = true; sh.deathTimer = CONFIG.ship.deathDelay; explosion(sh.x, sh.y, '#ffffff', 40, sh.w * 0.35); Sfx.play('explosion'); }
+  else sh.invuln = CONFIG.ship.invulnTime;
+  UI.updateHud(true);
+}
+
+function update(dt) {
+  G.time += dt;
+  const d = difficulty();
+  G.scroll = lerp(CONFIG.world.scrollStart, CONFIG.world.scrollMax, d) * H;
+  G.bgScroll += G.scroll * dt;
+  const sh = G.ship;
+
+  if (!sh.dead) {
+    G.distance += (G.scroll / H) * CONFIG.world.metersPerScreen * dt;
+    // ---- steering ----
+    Input.update(dt);
+    const range = W / 2 - sh.w / 2;
+    if (Input.mode === 'tilt') sh.x = W / 2 + Input.axis * range;
+    else sh.x += Input.consumeTouchDelta() * CONFIG.ship.touchGain + Input.keyAxis * CONFIG.ship.keySpeed * W * dt;
+    sh.x = clamp(sh.x, sh.w / 2, W - sh.w / 2);
+    // ---- auto-fire ----
+    sh.fireTimer -= dt;
+    if (sh.fireTimer <= 0) {
+      const b = takeFromPool(G.bullets);
+      if (b) { b.x = sh.x; b.y = sh.y - sh.w * 0.6; b.w = W * CONFIG.bullet.width; Sfx.play('shoot'); }
+      sh.fireTimer += 1 / CONFIG.ship.fireRate;
+    }
+    // ---- engine trail ----
+    const tc = trailColor(G.skin, G.time);
+    emitParticle(sh.x + rand(-sh.w * 0.08, sh.w * 0.08), sh.y + sh.w * 0.5, rand(-0.02, 0.02) * W, G.scroll * 0.6 + 0.2 * H, rand(0.18, 0.32), sh.w * rand(0.08, 0.16), tc, false);
+    if (sh.invuln > 0) sh.invuln -= dt;
+  } else {
+    sh.deathTimer -= dt;
+    if (sh.deathTimer <= 0) { endRun(); return; }
+  }
+
+  // ---- bullets ----
+  const bulletSpeed = CONFIG.bullet.speed * H;
+  for (const b of G.bullets) { if (!b.active) continue; b.y -= bulletSpeed * dt; if (b.y < -b.w * 4) b.active = false; }
+
+  // ---- asteroids ----
+  for (let i = G.asteroids.length - 1; i >= 0; i--) {
+    const a = G.asteroids[i];
+    a.y += (G.scroll + a.extra) * dt; a.rot += a.spin * dt;
+    if (a.y > H + a.w) G.asteroids.splice(i, 1);
+  }
+
+  // ---- enemies ----
+  const c = CONFIG.enemy;
+  for (let i = G.enemies.length - 1; i >= 0; i--) {
+    const e = G.enemies[i];
+    e.t += dt;
+    e.y += (G.scroll + c.extraSpeed * H) * dt;
+    e.x = clamp(e.baseX + Math.sin(e.phase + e.t * c.weaveFreq * TAU) * c.weaveAmp * W, e.w / 2, W - e.w / 2);
+    if (e.flash > 0) e.flash -= dt;
+    if (e.y > H + e.w) G.enemies.splice(i, 1);
+  }
+
+  // ---- junk ----
+  for (const j of G.junk) {
+    if (!j.active) continue;
+    j.vx *= Math.exp(-dt * 3); j.vy *= Math.exp(-dt * 3);
+    j.x += j.vx * dt; j.y += (G.scroll + j.vy) * dt; j.rot += CONFIG.junk.spin * dt;
+    if (j.x < j.w / 2) { j.x = j.w / 2; j.vx = Math.abs(j.vx); }
+    if (j.x > W - j.w / 2) { j.x = W - j.w / 2; j.vx = -Math.abs(j.vx); }
+    if (j.y > H + j.w) j.active = false;
+  }
+
+  // ---- particles ----
+  for (const p of G.particles) {
+    if (!p.active) continue;
+    p.life -= dt; if (p.life <= 0) { p.active = false; continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    p.vx *= Math.exp(-dt * 2); p.vy = p.ring ? 0 : p.vy * Math.exp(-dt * 2);
+  }
+
+  // ---- collisions: bullets vs enemies ----
+  const br = W * CONFIG.bullet.width * CONFIG.bullet.hitbox / 2;
+  for (const b of G.bullets) {
+    if (!b.active) continue;
+    for (let i = G.enemies.length - 1; i >= 0; i--) {
+      const e = G.enemies[i], er = e.w * c.hitbox / 2;
+      if (Math.hypot(b.x - e.x, b.y - e.y) < br + er) {
+        b.active = false;
+        e.hp -= CONFIG.bullet.damage; e.flash = c.flashTime;
+        emitParticle(b.x, b.y, rand(-0.1, 0.1) * W, -0.1 * H, 0.15, b.w * 1.5, '#ffffff', false);
+        if (e.hp <= 0) {
+          Sfx.play('explosion');
+          explosion(e.x, e.y, '#ff4fd8', 26, e.w * 0.2);
+          for (let k = 0; k < c.junkDrop; k++) { const a = rand(0, TAU); spawnJunk(e.x, e.y, Math.cos(a) * 0.25 * W, Math.sin(a) * 0.12 * H - 0.05 * H); }
+          G.enemies.splice(i, 1);
+        } else Sfx.play('enemyHit');
+        break;
+      }
+    }
+  }
+
+  if (sh.dead) return;
+  const sr = sh.w * CONFIG.ship.hitbox / 2;
+  // ---- ship vs junk (always collectable) ----
+  for (const j of G.junk) {
+    if (!j.active) continue;
+    if (Math.hypot(j.x - sh.x, j.y - sh.y) < sr + j.w * CONFIG.junk.hitbox / 2) {
+      j.active = false;
+      G.runJunk += CONFIG.junk.value;
+      Save.data.junk += CONFIG.junk.value;      // wallet credited immediately
+      Sfx.play('pickup');
+      for (let k = 0; k < 5; k++) emitParticle(j.x, j.y, rand(-0.15, 0.15) * W, rand(-0.2, 0.05) * H, 0.3, j.w * 0.2, '#7ee8fa', false);
+      UI.updateHud(true);
+    }
+  }
+  // ---- ship vs asteroids / enemies ----
+  if (sh.invuln <= 0) {
+    for (const a of G.asteroids) if (Math.hypot(a.x - sh.x, a.y - sh.y) < sr + a.w * CONFIG.asteroid.hitbox / 2) { hitShip(); break; }
+    if (sh.invuln <= 0 && !sh.dead) for (const e of G.enemies) if (Math.hypot(e.x - sh.x, e.y - sh.y) < sr + e.w * c.hitbox / 2) { hitShip(); break; }
+  }
+
+  updateSpawner(dt);
+}
+
+/* ====================================================================
+   RENDER
+   ==================================================================== */
+let renderTime = 0;
+function render(dt) {
+  renderTime += dt;
+  ctx.clearRect(0, 0, W, H);
+  // background (3-layer parallax)
+  const pf = CONFIG.world.parallax;
+  Assets.drawBackground(ctx, 'background.far',  W, H, G.bgScroll * pf[0], renderTime);
+  Assets.drawBackground(ctx, 'background.mid',  W, H, G.bgScroll * pf[1], renderTime);
+  Assets.drawBackground(ctx, 'background.near', W, H, G.bgScroll * pf[2], renderTime);
+
+  const inRun = G.state === 'play' || G.state === 'pause';
+  if (!inRun) return;
+
+  for (const j of G.junk) if (j.active) Assets.draw(ctx, 'junk', j.x, j.y, j.w, j.rot, renderTime);
+  for (const a of G.asteroids) Assets.draw(ctx, a.key, a.x, a.y, a.w, a.rot, renderTime);
+  for (const e of G.enemies) Assets.draw(ctx, 'enemy', e.x, e.y, e.w, 0, renderTime, { flash: e.flash / CONFIG.enemy.flashTime });
+  for (const b of G.bullets) if (b.active) Assets.draw(ctx, 'bullet', b.x, b.y, b.w, 0, renderTime, { color: G.skin.art.bullet });
+
+  const sh = G.ship;
+  if (!sh.dead) {
+    const visible = sh.invuln <= 0 || Math.floor(sh.invuln * 10) % 2 === 0;
+    if (visible) Assets.draw(ctx, G.skin.art.ship, sh.x, sh.y, sh.w, 0, renderTime);
+  }
+
+  // particles
+  for (const p of G.particles) {
+    if (!p.active) continue;
+    const k = p.life / p.max;
+    ctx.globalAlpha = k;
+    if (p.ring) {
+      ctx.strokeStyle = p.color; ctx.lineWidth = Math.max(1, p.size * 0.12);
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1.2 - k), 0, TAU); ctx.stroke();
+    } else {
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (0.4 + 0.6 * k), 0, TAU); ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ====================================================================
+   UI / SCREENS — simple state machine on DOM overlays
+   ==================================================================== */
+const UI = {
+  screens: ['menu', 'enableTilt', 'pause', 'gameover', 'hangar', 'settings'],
+  hudCache: { lives: -1, dist: -1, junk: -1 },
+  show(state) {
+    G.state = state;
+    for (const id of this.screens) $(id).classList.toggle('hidden', id !== state);
+    $('hud').classList.toggle('hidden', !(state === 'play' || state === 'pause'));
+    if (state === 'menu') this.updateMenu();
+    if (state === 'hangar') this.renderHangar();
+    if (state === 'settings') this.renderSettings();
+    if (state === 'pause') $('pauseHint').textContent = Input.mode === 'tilt' ? 'Hold the phone comfortably, then tap Recalibrate to set the neutral angle.' : 'Steering by touch drag (no tilt sensor available).';
+  },
+  updateMenu() {
+    $('menuBest').textContent = Save.data.best + ' m';
+    $('menuJunk').textContent = Save.data.junk;
+  },
+  updateHud(force) {
+    const dist = Math.floor(G.distance);
+    if (force || this.hudCache.lives !== G.lives) {
+      let s = '';
+      for (let i = 0; i < CONFIG.ship.lives; i++) s += i < G.lives ? '<span>♥</span>' : '<span class="lost">♥</span>';
+      $('hearts').innerHTML = s; this.hudCache.lives = G.lives;
+    }
+    if (force || this.hudCache.dist !== dist) { $('distance').textContent = dist + ' m'; this.hudCache.dist = dist; }
+    if (force || this.hudCache.junk !== G.runJunk) { $('runJunk').textContent = '⬡ ' + G.runJunk; this.hudCache.junk = G.runJunk; }
+  },
+  pause(byLandscape) {
+    if (G.state !== 'play') return;
+    G.pausedByLandscape = !!byLandscape;
+    this.show('pause');
+  },
+  resume() {
+    if (G.state !== 'pause' || this.isLandscape()) return;
+    this.show('play');
+    Input.consumeTouchDelta();
+  },
+  isLandscape() { return window.innerWidth > window.innerHeight; },
+  setLandscape(on) {
+    $('rotate').classList.toggle('hidden', !on);
+    if (on) this.pause(true);
+  },
+  /* ---- Hangar ---- */
+  renderHangar() {
+    $('hangarJunk').textContent = Save.data.junk;
+    const list = $('skinList'); list.innerHTML = '';
+    for (const skin of SKINS) {
+      const owned = Save.data.owned.includes(skin.id), equipped = Save.data.equipped === skin.id;
+      const card = document.createElement('div');
+      card.className = 'skin' + (equipped ? ' equipped' : '');
+      const cv = document.createElement('canvas'); cv.width = 90 * Math.min(DPR, 2); cv.height = cv.width; cv.dataset.skin = skin.id;
+      const name = document.createElement('div'); name.className = 'name'; name.textContent = skin.name;
+      const price = document.createElement('div'); price.className = 'price';
+      price.textContent = equipped ? 'Equipped' : owned ? 'Owned' : (skin.price === 0 ? 'Free' : '⬡ ' + skin.price);
+      const btn = document.createElement('button'); btn.className = 'btn' + (owned ? '' : ' secondary');
+      if (equipped) { btn.textContent = 'EQUIPPED'; btn.disabled = true; }
+      else if (owned) { btn.textContent = 'EQUIP'; btn.onclick = () => { Save.data.equipped = skin.id; Save.save(); Sfx.play('pickup'); this.renderHangar(); }; }
+      else {
+        btn.textContent = 'BUY';
+        btn.disabled = Save.data.junk < skin.price;
+        btn.onclick = () => {
+          if (Save.data.junk < skin.price) return;
+          Save.data.junk -= skin.price; Save.data.owned.push(skin.id); Save.data.equipped = skin.id; Save.save();
+          Sfx.play('pickup'); this.renderHangar();
+        };
+      }
+      card.append(cv, name, price, btn); list.appendChild(card);
+    }
+    this.drawHangarPreviews();
+  },
+  drawHangarPreviews() {
+    const cvs = $('skinList').querySelectorAll('canvas');
+    for (const cv of cvs) {
+      const skin = SKINS.find(s => s.id === cv.dataset.skin); if (!skin) continue;
+      const c2 = cv.getContext('2d'); c2.clearRect(0, 0, cv.width, cv.height);
+      Assets.draw(c2, skin.art.ship, cv.width / 2, cv.height / 2, cv.width * 0.5, 0, renderTime);
+    }
+  },
+  /* ---- Settings ---- */
+  renderSettings() {
+    $('sensSlider').value = Save.data.settings.sensitivity;
+    $('sensVal').textContent = Save.data.settings.sensitivity.toFixed(1) + '×';
+    $('muteVal').textContent = Save.data.settings.muted ? 'Off' : 'On';
+    $('btnMute').textContent = Save.data.settings.muted ? 'UNMUTE' : 'MUTE';
+    $('steerInfo').textContent = Input.hasTilt ? 'Tilt sensor active.' : (Input.needsPermission() && Save.data.tiltPermission !== 'granted' ? 'Tilt permission will be requested when you press Play.' : 'No tilt data yet — touch drag is used as fallback.');
+  },
+  /* ---- Debug ---- */
+  updateDebug(fps) {
+    if (!CONFIG.debug) return;
+    const counts = { ast: G.asteroids.length, en: G.enemies.length, bul: G.bullets.filter(b => b.active).length, junk: G.junk.filter(j => j.active).length, part: G.particles.filter(p => p.active).length };
+    $('debug').textContent =
+      `fps ${fps.toFixed(0)}  state ${G.state}  ${W}x${H} dpr ${DPR}\n` +
+      `input ${Input.mode}  raw ${Input.rawGamma === null ? '-' : Input.rawGamma.toFixed(1)}°  cal ${Input.calibratedAngle().toFixed(1)}°  axis ${Input.axis.toFixed(2)}\n` +
+      `scroll ${(G.scroll / H).toFixed(2)} sh/s  dist ${Math.floor(G.distance)} m  diff ${difficulty().toFixed(2)}\n` +
+      `ast ${counts.ast} enemy ${counts.en} bullet ${counts.bul} junk ${counts.junk} part ${counts.part}`;
+  },
+  bind() {
+    const on = (id, fn) => $(id).addEventListener('click', e => { e.preventDefault(); Sfx.unlock(); fn(e); });
+    on('btnPlay', () => this.onPlay());
+    on('btnAgain', () => this.onPlay());
+    on('btnHangar', () => this.show('hangar'));
+    on('btnSettings', () => this.show('settings'));
+    on('btnHangarBack', () => this.show('menu'));
+    on('btnSettingsBack', () => this.show('menu'));
+    on('btnGoMenu', () => this.show('menu'));
+    on('pauseBtn', () => this.pause(false));
+    on('btnResume', () => this.resume());
+    on('btnRecalibrate', () => { Input.calibrate(); this.resume(); });
+    on('btnQuit', () => { Save.save(); this.show('menu'); });
+    on('btnEnableTilt', async () => { await Input.requestPermission(); startRun(); });
+    on('btnNoTilt', () => { startRun(); });
+    on('btnMute', () => {
+      Save.data.settings.muted = !Save.data.settings.muted; Sfx.setMuted(Save.data.settings.muted); Save.save(); this.renderSettings();
+    });
+    const slider = $('sensSlider');
+    slider.addEventListener('input', () => { Save.data.settings.sensitivity = parseFloat(slider.value); $('sensVal').textContent = Save.data.settings.sensitivity.toFixed(1) + '×'; });
+    slider.addEventListener('change', () => { Save.save(); });
+  },
+  /** Play pressed: handle the iOS motion permission flow, then start. */
+  async onPlay() {
+    if (Input.needsPermission()) {
+      if (Save.data.tiltPermission !== 'granted') {
+        $('tiltDeniedNote').style.display = Save.data.tiltPermission === 'denied' ? 'block' : 'none';
+        this.show('enableTilt');
+        return;
+      }
+      await Input.requestPermission();   // already granted: resolves without a prompt
+    } else Input.listen();
+    startRun();
+  },
+};
+
+/* ====================================================================
+   BOOT — canvas sizing, loop, lifecycle events
+   ==================================================================== */
+function resize() {
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, CONFIG.loop.dprCap);
+  const oldW = W, oldH = H;
+  W = vw; H = vh; DPR = dpr;
+  canvas.width = Math.round(vw * dpr); canvas.height = Math.round(vh * dpr);
+  canvas.style.width = vw + 'px'; canvas.style.height = vh + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // rescale live entities so a resize mid-run keeps proportions
+  const sx = W / oldW, sy = H / oldH;
+  if (oldW > 1 && (sx !== 1 || sy !== 1)) {
+    const sh = G.ship; sh.x *= sx; sh.y = H * CONFIG.ship.yPos; sh.w = W * CONFIG.ship.width;
+    for (const a of G.asteroids) { a.x *= sx; a.y *= sy; a.w *= sx; a.extra *= sy; }
+    for (const e of G.enemies) { e.x *= sx; e.baseX *= sx; e.y *= sy; e.w *= sx; }
+    for (const b of G.bullets) { b.x *= sx; b.y *= sy; b.w *= sx; }
+    for (const j of G.junk) { j.x *= sx; j.y *= sy; j.w *= sx; }
+    for (const p of G.particles) { p.x *= sx; p.y *= sy; }
+  }
+  UI.setLandscape(UI.isLandscape());
+}
+
+let lastTs = 0, fpsAcc = 0, fpsN = 0, fps = 0, debugTimer = 0, hangarTimer = 0;
+function frame(ts) {
+  if (!lastTs) lastTs = ts;
+  let dt = (ts - lastTs) / 1000; lastTs = ts;
+  if (dt > CONFIG.loop.maxDt) dt = CONFIG.loop.maxDt;
+  if (dt < 0) dt = 0;
+
+  if (G.state === 'play') { update(dt); if (G.state === 'play') UI.updateHud(false); }
+  else G.bgScroll += CONFIG.world.menuScroll * H * dt;   // gentle drift behind menus
+  render(dt);
+  if (G.state === 'hangar') { hangarTimer += dt; if (hangarTimer >= 1 / 20) { hangarTimer = 0; UI.drawHangarPreviews(); } }
+
+  if (CONFIG.debug) {
+    fpsAcc += dt; fpsN++; debugTimer += dt;
+    if (debugTimer >= 0.25) { fps = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; debugTimer = 0; UI.updateDebug(fps); }
+  }
+  requestAnimationFrame(frame);
+}
+
+function boot() {
+  Save.load();
+  Sfx.setMuted(Save.data.settings.muted);
+  Input.initTouch(canvas);
+  if (!Input.needsPermission()) Input.listen();           // Android / desktop: no prompt needed
+  else if (Save.data.tiltPermission === 'granted') Input.listen(); // iOS, previously granted
+  UI.bind();
+  resize();
+  UI.show('menu');
+  if (CONFIG.debug) $('debug').classList.remove('hidden');
+
+  window.addEventListener('resize', resize);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 150));
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { UI.pause(false); Save.save(); } });
+  window.addEventListener('pagehide', () => Save.save());
+  window.addEventListener('blur', () => UI.pause(false));
+  // first tap anywhere unlocks audio
+  const unlock = () => { Sfx.unlock(); };
+  window.addEventListener('pointerdown', unlock, { passive: true });
+  window.addEventListener('touchstart', unlock, { passive: true });
+  // block pinch zoom / double-tap zoom on iOS Safari
+  document.addEventListener('gesturestart', e => e.preventDefault());
+  document.addEventListener('dblclick', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  Assets.init().then(() => requestAnimationFrame(frame));
+}
+boot();
+</script>
+</body>
+</html>
