@@ -821,7 +821,7 @@ const SOUNDS = {
   shoot: { type: 'procedural', play(ac, out) {
     const o = ac.createOscillator(), g = ac.createGain(); o.type = 'square';
     o.frequency.setValueAtTime(880, ac.currentTime); o.frequency.exponentialRampToValueAtTime(220, ac.currentTime + 0.08);
-    g.gain.setValueAtTime(0.04, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.09);
+    g.gain.setValueAtTime(0.02, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.09);
     o.connect(g).connect(out); o.start(); o.stop(ac.currentTime + 0.1);
   } },
   enemyHit: { type: 'procedural', play(ac, out) {
