@@ -282,7 +282,7 @@ const CONFIG = {
     width: 0.10,        // w
     yPos: 0.86,         // fraction of screen height (centre of ship during flight)
     lives: 3,           // base lives (upgrades add up to +3)
-    fireRate: 3,        // shots per second
+    fireRate: 4,        // shots per second
     invulnTime: 2,      // seconds of blinking invulnerability after a hit
     hitbox: 0.8,        // circle diameter as fraction of sprite width
     touchGain: 1.0,     // px of ship movement per px of finger drag (touch fallback)
@@ -298,7 +298,7 @@ const CONFIG = {
   },
   asteroid: {
     widths: [0.07, 0.11, 0.16, 0.32],   // small, medium, large, huge (w) — huge is rare, twice the large size
-    spawnRateStart: 1.2,          // per second
+    spawnRateStart: 0.7,          // per second
     spawnRateMax: 4.5,            // per second (reached at world.rampDistance)
     extraSpeed: [0.02, 0.18],     // sh/s added to scroll speed (random)
     spinMax: 0.9,                 // rad/s (random, either direction)
@@ -341,21 +341,21 @@ const CONFIG = {
   },
   world: {
     scrollStart: 0.30,            // sh/s
-    scrollMax: 1.60,              // sh/s
+    scrollMax: 1.20,              // sh/s
     rampDistance: 5000,           // metres at which difficulty / scroll are capped
-    sectorLength: [400, 600],     // metres between space-style changes (random in range)
-    sectorFade: 2.5,              // seconds to blend from one style to the next
+    sectorLength: [300, 600],     // metres between space-style changes (random in range)
+    sectorFade: 1.5,              // seconds to blend from one style to the next
     // sector styles: hue (deg) + saturation (0..1) + wash (how strongly space itself is tinted).
     // The run always starts with sectors[0]; every later sector is a random different entry.
     sectors: [
       { id: 'default', hue: 222, sat: 0.12, wash: 0 },
-      { id: 'crimson', hue: 350, sat: 0.75, wash: 0.9 },
-      { id: 'emerald', hue: 145, sat: 0.7,  wash: 0.8 },
-      { id: 'amber',   hue: 35,  sat: 0.8,  wash: 0.85 },
-      { id: 'violet',  hue: 280, sat: 0.7,  wash: 0.9 },
-      { id: 'ice',     hue: 195, sat: 0.6,  wash: 0.8 },
-      { id: 'toxic',   hue: 95,  sat: 0.75, wash: 0.8 },
-      { id: 'rust',    hue: 15,  sat: 0.6,  wash: 0.7 },
+      { id: 'crimson', hue: 350, sat: 0.85, wash: 0.9 },
+      { id: 'emerald', hue: 145, sat: 0.8,  wash: 0.8 },
+      { id: 'amber',   hue: 35,  sat: 0.9,  wash: 0.85 },
+      { id: 'violet',  hue: 280, sat: 0.8,  wash: 0.9 },
+      { id: 'ice',     hue: 195, sat: 0.7,  wash: 0.8 },
+      { id: 'toxic',   hue: 95,  sat: 0.85, wash: 0.8 },
+      { id: 'rust',    hue: 15,  sat: 0.7,  wash: 0.7 },
     ],
     metersPerScreen: 50,          // 1 screen height of scroll = 50 m
     parallax: [0.15, 0.35, 0.70], // speed factor of the far / mid / near star layers
