@@ -56,8 +56,13 @@
   /* centre content when it fits, scroll (instead of clipping) when it overflows */
   .screen > :first-child { margin-top: auto; }
   .screen > :last-child { margin-bottom: auto; }
+  /* screens that sit on top of the live hangar scene */
+  .screen.scene { background: none; -webkit-backdrop-filter: none; backdrop-filter: none; justify-content: space-between; overflow: hidden; }
+  .screen.scene > :first-child { margin-top: 0; }
+  .screen.scene > :last-child { margin-bottom: 0; }
+
   h1 {
-    font-size: clamp(30px, 9vw, 48px); margin: 0 0 6px; letter-spacing: 2px;
+    font-size: clamp(30px, 9vw, 48px); margin: 0 0 6px; letter-spacing: 2px; line-height: 1.05;
     color: #fff; text-shadow: 0 0 14px var(--accent), 0 0 30px rgba(79, 240, 255, 0.5);
   }
   h2 { font-size: clamp(24px, 7vw, 34px); margin: 0 0 6px; color: #fff; text-shadow: 0 0 12px var(--accent); }
@@ -77,10 +82,23 @@
     touch-action: manipulation;
   }
   .btn:active { transform: scale(0.97); filter: brightness(1.15); }
-  .btn.secondary { background: transparent; color: var(--accent); border: 2px solid var(--accent); box-shadow: none; }
+  .btn.secondary { background: rgba(10, 14, 30, 0.6); color: var(--accent); border: 2px solid var(--accent); box-shadow: none; }
   .btn.danger { background: transparent; color: #ff6b8a; border: 2px solid #ff6b8a; box-shadow: none; }
   .btn.small { min-width: 120px; min-height: 48px; font-size: 17px; }
   .btn:disabled { opacity: 0.45; cursor: default; }
+
+  /* Main menu (hangar scene behind it) */
+  #menu .top { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  #menu .record { font-size: 18px; color: #fff; }
+  #menu .record b { color: #ffd84f; }
+  #menu .hint {
+    font-size: clamp(18px, 5.5vw, 24px); font-weight: 700; letter-spacing: 2px; color: #fff;
+    text-shadow: 0 0 12px var(--accent); animation: pulse 1.6s ease-in-out infinite; pointer-events: none;
+    position: absolute; left: 20px; right: 20px; bottom: calc(var(--sab) + 108px);
+  }
+  @keyframes pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+  #menu .bottom { display: flex; gap: 12px; width: 100%; justify-content: center; }
+  #menu .bottom .btn { min-width: 0; flex: 1; max-width: 220px; }
 
   /* HUD */
   #hud {
@@ -90,27 +108,40 @@
     padding: calc(var(--sat) + 10px) calc(var(--sar) + 12px) calc(var(--sab) + 10px) calc(var(--sal) + 12px);
   }
   #hud .row { margin: 0; display: flex; justify-content: space-between; align-items: center; width: 100%; }
-  #hearts { font-size: 26px; letter-spacing: 3px; color: #ff4f6e; text-shadow: 0 0 8px rgba(255, 79, 110, 0.8); }
+  #hearts { font-size: 24px; letter-spacing: 1px; color: #ff4f6e; text-shadow: 0 0 8px rgba(255, 79, 110, 0.8); max-width: 34%; line-height: 1; }
   #hearts .lost { color: rgba(255, 255, 255, 0.18); text-shadow: none; }
   #hudCenter { text-align: center; }
   #distance { font-size: 26px; font-weight: 700; color: #fff; text-shadow: 0 0 10px var(--accent); }
   #runJunk { font-size: 15px; color: #9ff7ff; }
+  #shieldHud { font-size: 13px; color: #6fb9ff; min-height: 16px; }
   #pauseBtn {
     pointer-events: auto; width: 56px; height: 56px; min-width: 0; min-height: 0; padding: 0;
     border-radius: 14px; font-size: 24px; background: rgba(10, 14, 30, 0.7); color: #fff;
     border: 2px solid rgba(255, 255, 255, 0.35); box-shadow: none;
   }
 
-  /* Hangar */
-  #skinList { display: grid; grid-template-columns: repeat(2, minmax(140px, 170px)); gap: 12px; width: 100%; justify-content: center; }
-  .skin { background: var(--panel); border: 2px solid rgba(255, 255, 255, 0.12); border-radius: 16px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .skin.equipped { border-color: var(--accent); box-shadow: 0 0 14px rgba(79, 240, 255, 0.35); }
-  .skin canvas { width: 72px; height: 72px; }
-  .skin .name { font-weight: 700; font-size: 17px; }
-  .skin .price { font-size: 14px; color: var(--dim); }
-  .skin .btn { min-width: 0; width: 100%; min-height: 44px; font-size: 16px; padding: 6px; }
-  #hangar { gap: 8px; }
-  #hangar h2 { margin-bottom: 0; }
+  /* Hangar (shop) — ship is drawn on the canvas at the left, list on the right */
+  #hangar .hangarTop { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
+  .tabs { display: flex; gap: 8px; }
+  .tabs .btn { min-width: 0; min-height: 48px; padding: 8px 18px; font-size: 17px; }
+  .tabs .btn:not(.active) { background: rgba(10, 14, 30, 0.6); color: var(--accent); border: 2px solid var(--accent); box-shadow: none; }
+  #hangar .hangarBody { display: flex; width: 100%; flex: 1; min-height: 0; gap: 8px; }
+  #hangar .spacer { flex: 0 0 40%; }
+  #hangarList { flex: 1; min-height: 0; overflow-y: auto; touch-action: pan-y; display: flex; flex-direction: column; gap: 8px; padding: 2px; -webkit-overflow-scrolling: touch; }
+  .row {
+    background: var(--panel); border: 2px solid rgba(255, 255, 255, 0.12); border-radius: 14px; padding: 10px;
+    display: flex; flex-direction: column; gap: 4px; text-align: left; flex: 0 0 auto;
+  }
+  .row.equipped { border-color: var(--accent); box-shadow: 0 0 12px rgba(79, 240, 255, 0.3); }
+  .row .head { display: flex; align-items: center; gap: 8px; }
+  .row canvas { width: 34px; height: 34px; flex: 0 0 34px; }
+  .row .name { font-weight: 700; font-size: 16px; flex: 1; }
+  .row .price { font-size: 13px; color: var(--dim); }
+  .row .desc { font-size: 13px; color: #c3cde6; line-height: 1.3; }
+  .row .tiers { font-size: 13px; letter-spacing: 3px; color: var(--accent); }
+  .row .tiers .off { color: rgba(255, 255, 255, 0.25); }
+  .row .btn { min-width: 0; width: 100%; min-height: 42px; font-size: 15px; padding: 6px; margin-top: 2px; }
+  #hangar > .btn { min-width: 160px; }
 
   /* Settings */
   .setting { width: min(360px, 100%); background: var(--panel); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
@@ -141,22 +172,23 @@
 <div id="hud" class="screen hidden">
   <div class="row">
     <div id="hearts"></div>
-    <div id="hudCenter"><div id="distance">0 m</div><div id="runJunk">⬡ 0</div></div>
+    <div id="hudCenter"><div id="distance">0 m</div><div id="runJunk">⬡ 0</div><div id="shieldHud"></div></div>
     <button id="pauseBtn" class="btn" aria-label="Pause">❚❚</button>
   </div>
 </div>
 
-<!-- Main menu -->
-<div id="menu" class="screen">
-  <h1>SPACE JUNK<br>RUNNER</h1>
-  <p class="sub">Tilt to steer · auto-fire · collect junk</p>
-  <div class="stats">
-    <div class="stat"><b id="menuBest">0 m</b><span>Best</span></div>
-    <div class="stat"><b id="menuJunk">0</b><span>Junk</span></div>
+<!-- Main menu: hangar scene is drawn on the canvas; tapping anywhere that is not a button launches -->
+<div id="menu" class="screen scene">
+  <div class="top">
+    <h1>SPACE JUNK<br>RUNNER</h1>
+    <p class="sub">Tilt to steer · auto-fire · collect junk</p>
+    <div class="record">Best distance: <b id="menuBest">0 m</b> · Junk: <b id="menuJunk">0</b></div>
   </div>
-  <button class="btn" id="btnPlay">PLAY</button>
-  <button class="btn secondary" id="btnHangar">HANGAR</button>
-  <button class="btn secondary" id="btnSettings">SETTINGS</button>
+  <div class="hint">TAP TO START YOUR JOURNEY</div>
+  <div class="bottom">
+    <button class="btn secondary" id="btnHangar">HANGAR</button>
+    <button class="btn secondary" id="btnSettings">SETTINGS</button>
+  </div>
 </div>
 
 <!-- Enable tilt (iOS permission explanation) -->
@@ -190,11 +222,19 @@
   <button class="btn secondary" id="btnGoMenu">MAIN MENU</button>
 </div>
 
-<!-- Hangar / shop -->
-<div id="hangar" class="screen hidden">
-  <h2>HANGAR</h2>
-  <p class="sub">Junk: <b id="hangarJunk">0</b></p>
-  <div id="skinList"></div>
+<!-- Hangar / shop: tabs on top, ship on the canvas (left), list on the right -->
+<div id="hangar" class="screen scene hidden">
+  <div class="hangarTop">
+    <div class="tabs">
+      <button class="btn active" id="tabSkins">SKINS</button>
+      <button class="btn" id="tabUpgrades">UPGRADES</button>
+    </div>
+    <p class="sub">Junk: <b id="hangarJunk">0</b></p>
+  </div>
+  <div class="hangarBody">
+    <div class="spacer"></div>
+    <div id="hangarList"></div>
+  </div>
   <button class="btn secondary" id="btnHangarBack">BACK</button>
 </div>
 
@@ -225,8 +265,9 @@
 'use strict';
 /* ====================================================================
    SPACE JUNK RUNNER — Phase 1
-   Sections: CONFIG · UTIL · ASSETS · AUDIO · SAVE · INPUT/TILT ·
-             GAME STATE · SPAWNER · UPDATE · RENDER · UI/SCREENS · BOOT
+   Sections: CONFIG · DATA (skins, upgrades) · UTIL · ASSETS · AUDIO ·
+             SAVE · INPUT/TILT · GAME STATE · SPAWNER · UPDATE ·
+             RENDER · UI/SCREENS · BOOT
    Units: sizes are fractions of screen width (w), speeds are screen
    heights per second (sh/s). Internally everything is converted to CSS px.
    ==================================================================== */
@@ -237,8 +278,8 @@
 const CONFIG = {
   ship: {
     width: 0.10,        // w
-    yPos: 0.86,         // fraction of screen height (centre of ship)
-    lives: 3,
+    yPos: 0.86,         // fraction of screen height (centre of ship during flight)
+    lives: 3,           // base lives (upgrades add up to +3)
     fireRate: 3,        // shots per second
     invulnTime: 2,      // seconds of blinking invulnerability after a hit
     hitbox: 0.8,        // circle diameter as fraction of sprite width
@@ -248,7 +289,7 @@ const CONFIG = {
   },
   bullet: {
     speed: 1.2,         // sh/s
-    damage: 1,
+    damage: 1,          // base damage; gun upgrade raises it (see UPGRADES)
     width: 0.014,       // w
     hitbox: 0.8,
     pool: 64,
@@ -283,13 +324,28 @@ const CONFIG = {
     spin: 2.5,                    // rad/s
     pool: 48,
   },
+  shield: {
+    pickupWidth: 0.065,           // w
+    spawnInterval: [16, 26],      // seconds between shield pickups (only with the Shield upgrade)
+    firstSpawn: [8, 14],          // seconds into the run
+    hitbox: 1.0,
+    auraSize: 2.3,                // aura diameter in ship widths
+    warnTime: 1.0,                // aura flickers during the last second
+  },
   world: {
     scrollStart: 0.30,            // sh/s
     scrollMax: 0.80,              // sh/s
     rampDistance: 5000,           // metres at which difficulty / scroll are capped
     metersPerScreen: 50,          // 1 screen height of scroll = 50 m
     parallax: [0.15, 0.35, 0.70], // speed factor of the far / mid / near star layers
-    menuScroll: 0.08,             // sh/s background drift on menus
+    menuScroll: 0.04,             // sh/s background drift behind the hangar
+  },
+  menu: {
+    shipX: 0.5, shipY: 0.57,          // ship position on the main menu (fractions of W / H)
+    hangarShipX: 0.22, hangarShipY: 0.55, // ship position on the hangar (shop) screen
+    shipScale: 1.6,                   // ship is drawn larger in the hangar
+    launchDuration: 1.15,             // seconds for hangar to slide away and ship to reach flight position
+    dockRate: 7,                      // how fast the hangar slides back in on the menu (1/s)
   },
   spawn: {
     topBand: 0.30,                // fraction of H: obstacles in this band count for the "never block" check
@@ -310,6 +366,9 @@ const CONFIG = {
   debug: new URLSearchParams(location.search).get('debug') === '1',
 };
 
+/* ====================================================================
+   DATA — skins and upgrades. Adding entries here is all it takes.
+   ==================================================================== */
 /* Skins — cosmetic only. Art keys point into the ASSETS manifest. */
 const SKINS = [
   { id: 'scout',    name: 'Scout',    price: 0,   art: { ship: 'ship.scout',    bullet: '#8fd6ff', trail: '#4aa8ff' } },
@@ -320,6 +379,33 @@ const SKINS = [
   { id: 'nova',     name: 'Nova',     price: 500, art: { ship: 'ship.nova',     bullet: '#ffffff', trail: 'rainbow' } },
 ];
 
+/* Upgrades — gameplay. Each has tiers with steeply rising prices; level 0 = not bought.
+   describe(level) returns the text for the CURRENT level, next tier is tiers[level]. */
+const UPGRADES = [
+  {
+    id: 'lives', name: 'Extra Lives', icon: '♥',
+    tiers: [{ price: 150, lives: 1 }, { price: 450, lives: 2 }, { price: 1200, lives: 3 }],
+    describe: lvl => `${CONFIG.ship.lives + lvl} lives per run`,
+    next: lvl => `+1 life (${CONFIG.ship.lives + lvl + 1} total)`,
+  },
+  {
+    id: 'shield', name: 'Shield', icon: '◈',
+    tiers: [{ price: 200, duration: 3 }, { price: 600, duration: 5 }, { price: 1500, duration: 8 }],
+    describe: lvl => lvl === 0 ? 'No shield pickups yet' : `Shield pickups last ${UPGRADES[1].tiers[lvl - 1].duration} s`,
+    next: lvl => lvl === 0 ? `Shield pickups appear: ${UPGRADES[1].tiers[0].duration} s of invulnerability` : `Shield lasts ${UPGRADES[1].tiers[lvl].duration} s`,
+  },
+  {
+    id: 'damage', name: 'Gun Damage', icon: '⚡',
+    tiers: [{ price: 800, hits: 2 }, { price: 3000, hits: 1 }],
+    describe: lvl => `${lvl === 0 ? CONFIG.enemy.hp : UPGRADES[2].tiers[lvl - 1].hits} hit${(lvl === 0 ? CONFIG.enemy.hp : UPGRADES[2].tiers[lvl - 1].hits) === 1 ? '' : 's'} to destroy an enemy`,
+    next: lvl => `Enemies die in ${UPGRADES[2].tiers[lvl].hits} hit${UPGRADES[2].tiers[lvl].hits === 1 ? '' : 's'}`,
+  },
+];
+function upgradeLevel(id) { return (Save.data && Save.data.upgrades && Save.data.upgrades[id]) || 0; }
+function maxLives() { return CONFIG.ship.lives + upgradeLevel('lives'); }
+function shieldDuration() { const l = upgradeLevel('shield'); return l ? UPGRADES[1].tiers[l - 1].duration : 0; }
+function bulletDamage() { const l = upgradeLevel('damage'); return l ? CONFIG.enemy.hp / UPGRADES[2].tiers[l - 1].hits : CONFIG.bullet.damage; }
+
 /* ====================================================================
    UTIL
    ==================================================================== */
@@ -327,6 +413,7 @@ const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const lerp = (a, b, t) => a + (b - a) * t;
 const rand = (a, b) => a + Math.random() * (b - a);
 const TAU = Math.PI * 2;
+const easeInOut = k => k < 0.5 ? 2 * k * k : 1 - 2 * (1 - k) * (1 - k);
 /** Deterministic PRNG (mulberry32) for reproducible procedural art. */
 function seededRandom(seed) {
   let s = seed >>> 0;
@@ -346,12 +433,12 @@ const $ = id => document.getElementById(id);
    Assets.draw(key, ...). Each manifest entry is either
      { type: 'procedural', draw: fn }
      { type: 'image', src, frames, frameSize:{w,h}, anchor:{x,y}, fps }
-   Entity drawers:     draw(ctx, size, t, extra)   — centred at (0,0), 'size' = width in px
-   Background drawers: draw(ctx, W, H, scrollPx, t) — fills the screen
+   Entity drawers:     draw(ctx, size, t, extra)            — centred at (0,0), 'size' = width in px
+   Scene drawers:      draw(ctx, W, H, offset, t, extra)    — full screen (backgrounds, hangar)
    To replace any visual with artwork, change only its manifest entry, e.g.
      'ship.scout': { type: 'image', src: 'art/ship_scout.png', frames: 4,
                      frameSize: { w: 64, h: 80 }, anchor: { x: 0.5, y: 0.5 }, fps: 12 },
-   For backgrounds, image entries are tiled vertically and scrolled.
+   Scene image entries are scaled to screen width; backgrounds tile vertically.
    ==================================================================== */
 
 /** Ship drawer factory. palette: hull, hull2, wing, line, cockpit, glow (string or fn(t)). */
@@ -398,8 +485,7 @@ function makeAsteroidDrawer(seed) {
     verts.push([Math.cos(a) * r, Math.sin(a) * r]);
   }
   const craters = [];
-  for (let i = 0; i < 3; i++) craters.push([rand2(rnd, -0.22, 0.22), rand2(rnd, -0.22, 0.22), 0.05 + rnd() * 0.08]);
-  function rand2(r, a, b) { return a + r() * (b - a); }
+  for (let i = 0; i < 3; i++) craters.push([-0.22 + rnd() * 0.44, -0.22 + rnd() * 0.44, 0.05 + rnd() * 0.08]);
   return function (ctx, s) {
     const g = ctx.createRadialGradient(-s * 0.15, -s * 0.15, s * 0.05, 0, 0, s * 0.55);
     g.addColorStop(0, '#8d93a3'); g.addColorStop(0.6, '#4a4f5e'); g.addColorStop(1, '#23262f');
@@ -465,6 +551,36 @@ function drawJunk(ctx, s) {
   ctx.beginPath(); ctx.arc(0, 0, s * 0.14, 0, TAU); ctx.fill();
 }
 
+/** Shield pickup: glowing blue hexagon with a shield emblem. */
+function drawShieldPickup(ctx, s, t) {
+  const r = s * 0.5, pulse = 0.8 + 0.2 * Math.sin(t * 6);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 1.8 * pulse);
+  g.addColorStop(0, 'rgba(90,170,255,0.6)'); g.addColorStop(1, 'rgba(90,170,255,0)');
+  ctx.fillStyle = g; ctx.fillRect(-r * 2, -r * 2, r * 4, r * 4);
+  ctx.fillStyle = '#1b3f80'; ctx.strokeStyle = '#8fc6ff'; ctx.lineWidth = Math.max(1, s * 0.06);
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) { const a = i / 6 * TAU - Math.PI / 6; if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r); else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  // emblem
+  ctx.fillStyle = '#bfe0ff';
+  ctx.beginPath(); ctx.moveTo(0, -r * 0.5); ctx.lineTo(r * 0.4, -r * 0.3); ctx.lineTo(r * 0.3, r * 0.2); ctx.lineTo(0, r * 0.5); ctx.lineTo(-r * 0.3, r * 0.2); ctx.lineTo(-r * 0.4, -r * 0.3); ctx.closePath(); ctx.fill();
+}
+
+/** Shield aura around the ship. extra: { remaining } seconds left (flickers when low). */
+function drawShieldAura(ctx, s, t, extra) {
+  const r = s * 0.5;
+  const low = extra && extra.remaining < CONFIG.shield.warnTime;
+  const flicker = low ? (Math.sin(t * 40) > 0 ? 1 : 0.35) : 1;
+  const pulse = 0.9 + 0.1 * Math.sin(t * 8);
+  const g = ctx.createRadialGradient(0, 0, r * 0.55, 0, 0, r * pulse);
+  g.addColorStop(0, 'rgba(90,170,255,0.05)'); g.addColorStop(0.8, 'rgba(90,170,255,0.28)'); g.addColorStop(1, 'rgba(140,210,255,0)');
+  ctx.globalAlpha = flicker; ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0, 0, r * pulse, 0, TAU); ctx.fill();
+  ctx.strokeStyle = 'rgba(160,215,255,0.9)'; ctx.lineWidth = Math.max(1, s * 0.02);
+  ctx.beginPath(); ctx.arc(0, 0, r * 0.9 * pulse, 0, TAU); ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
 function drawBullet(ctx, s, t, extra) {
   const color = (extra && extra.color) || '#8fd6ff';
   const h = s * 2.8;
@@ -506,6 +622,71 @@ function makeStarLayer(cfg) {
   };
 }
 
+/** Hangar interior (menu scene). offset = vertical slide in px; extra.padX = landing pad centre. */
+function drawHangar(ctx, W, H, offset, t, extra) {
+  const padX = (extra && extra.padX !== undefined) ? extra.padX : W / 2;
+  const floorY = H * 0.64;
+  ctx.save();
+  ctx.translate(0, offset);
+  // back wall
+  let g = ctx.createLinearGradient(0, 0, 0, floorY);
+  g.addColorStop(0, '#171d33'); g.addColorStop(1, '#0c101e');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, floorY);
+  // wall panel seams
+  ctx.strokeStyle = 'rgba(120,145,200,0.16)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let y = H * 0.09; y < floorY; y += H * 0.09) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+  for (let x = W * 0.125; x < W; x += W * 0.125) { ctx.moveTo(x, 0); ctx.lineTo(x, floorY); }
+  ctx.stroke();
+  // big round door in the back wall
+  ctx.strokeStyle = 'rgba(140,165,220,0.22)'; ctx.lineWidth = Math.max(2, W * 0.012);
+  ctx.beginPath(); ctx.arc(W / 2, floorY * 0.52, W * 0.28, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W / 2, floorY * 0.52, W * 0.2, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W / 2 - W * 0.28, floorY * 0.52); ctx.lineTo(W / 2 + W * 0.28, floorY * 0.52); ctx.moveTo(W / 2, floorY * 0.52 - W * 0.28); ctx.lineTo(W / 2, floorY * 0.52 + W * 0.28); ctx.stroke();
+  // ceiling light strips
+  for (let i = 0; i < 3; i++) {
+    const x = W * (0.2 + i * 0.3), on = 0.7 + 0.3 * Math.sin(t * 3 + i * 2);
+    g = ctx.createLinearGradient(0, 0, 0, H * 0.25);
+    g.addColorStop(0, `rgba(79,240,255,${0.22 * on})`); g.addColorStop(1, 'rgba(79,240,255,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - W * 0.04, 0); ctx.lineTo(x + W * 0.04, 0); ctx.lineTo(x + W * 0.12, H * 0.25); ctx.lineTo(x - W * 0.12, H * 0.25); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = `rgba(200,250,255,${on})`; ctx.fillRect(x - W * 0.04, 0, W * 0.08, H * 0.006);
+  }
+  // side pillars with hazard stripes
+  for (const side of [0, 1]) {
+    const x = side ? W - W * 0.07 : 0;
+    g = ctx.createLinearGradient(x, 0, x + W * 0.07, 0);
+    g.addColorStop(0, side ? '#1a2238' : '#2a3452'); g.addColorStop(1, side ? '#2a3452' : '#1a2238');
+    ctx.fillStyle = g; ctx.fillRect(x, 0, W * 0.07, floorY);
+    ctx.save(); ctx.beginPath(); ctx.rect(x, floorY - H * 0.07, W * 0.07, H * 0.07); ctx.clip();
+    for (let k = -2; k < 8; k++) {
+      ctx.fillStyle = k % 2 ? '#e8b400' : '#1a1a1a';
+      ctx.beginPath(); ctx.moveTo(x + k * W * 0.02, floorY - H * 0.07); ctx.lineTo(x + (k + 1) * W * 0.02, floorY - H * 0.07); ctx.lineTo(x + (k + 1) * W * 0.02 - W * 0.03, floorY); ctx.lineTo(x + k * W * 0.02 - W * 0.03, floorY); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  }
+  // floor with perspective grid
+  g = ctx.createLinearGradient(0, floorY, 0, H);
+  g.addColorStop(0, '#1b2238'); g.addColorStop(1, '#2b3451');
+  ctx.fillStyle = g; ctx.fillRect(0, floorY, W, H - floorY);
+  ctx.strokeStyle = 'rgba(79,240,255,0.18)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = -5; i <= 5; i++) { ctx.moveTo(W / 2 + i * W * 0.1, floorY); ctx.lineTo(W / 2 + i * W * 0.32, H); }
+  let y = floorY, step = H * 0.02;
+  while (y < H) { ctx.moveTo(0, y); ctx.lineTo(W, y); y += step; step *= 1.35; }
+  ctx.stroke();
+  // landing pad under the ship
+  const padY = floorY + H * 0.1, pulse = 0.6 + 0.4 * Math.sin(t * 2.5);
+  g = ctx.createRadialGradient(padX, padY, 0, padX, padY, W * 0.34);
+  g.addColorStop(0, `rgba(79,240,255,${0.22 * pulse})`); g.addColorStop(1, 'rgba(79,240,255,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(padX, padY, W * 0.34, W * 0.1, 0, 0, TAU); ctx.fill();
+  ctx.strokeStyle = `rgba(79,240,255,${0.5 + 0.4 * pulse})`; ctx.lineWidth = Math.max(2, W * 0.008);
+  ctx.beginPath(); ctx.ellipse(padX, padY, W * 0.26, W * 0.075, 0, 0, TAU); ctx.stroke();
+  ctx.setLineDash([W * 0.03, W * 0.03]); ctx.lineDashOffset = -t * W * 0.05;
+  ctx.beginPath(); ctx.ellipse(padX, padY, W * 0.32, W * 0.095, 0, 0, TAU); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
 const rainbow = t => `hsl(${(t * 120) % 360},100%,60%)`;
 
 const ASSETS = {
@@ -523,12 +704,16 @@ const ASSETS = {
   'enemy':  { type: 'procedural', draw: drawEnemy },
   'junk':   { type: 'procedural', draw: drawJunk },
   'bullet': { type: 'procedural', draw: drawBullet },
-  // ---- background (3 parallax layers) ----
+  'pickup.shield': { type: 'procedural', draw: drawShieldPickup },
+  'shield.aura':   { type: 'procedural', draw: drawShieldAura },
+  // ---- scenes: background (3 parallax layers) and the hangar ----
   'background.far':  { type: 'procedural', draw: makeStarLayer({ count: 90, size: [1, 1.6], alpha: 0.55, seed: 101, nebula: true, color: '#cfd8ff' }) },
   'background.mid':  { type: 'procedural', draw: makeStarLayer({ count: 55, size: [1.6, 2.4], alpha: 0.8, seed: 202, nebula: false, color: '#e8efff' }) },
   'background.near': { type: 'procedural', draw: makeStarLayer({ count: 25, size: [2.4, 3.6], alpha: 1.0, seed: 303, nebula: false, color: '#ffffff' }) },
+  'hangar': { type: 'procedural', draw: drawHangar },
   // ---- example of an image entry (artwork replacement) ----
   // 'junk': { type: 'image', src: 'art/junk.png', frames: 6, frameSize: { w: 32, h: 32 }, anchor: { x: 0.5, y: 0.5 }, fps: 10 },
+  // 'hangar': { type: 'image', src: 'art/hangar.png' },   // scaled to screen width, slides with the menu
 };
 
 const Assets = {
@@ -572,7 +757,7 @@ const Assets = {
     }
     ctx.restore();
   },
-  /** Draw a full-screen background layer with a vertical scroll offset (px). */
+  /** Draw a full-screen background layer with a vertical scroll offset (px); images tile vertically. */
   drawBackground(ctx, key, W, H, scroll, t) {
     const e = ASSETS[key];
     if (!e) return;
@@ -582,6 +767,14 @@ const Assets = {
     const dh = W * img.height / img.width;              // scale image to screen width
     let y = ((scroll % dh) + dh) % dh - dh;             // tile vertically
     for (; y < H; y += dh) ctx.drawImage(img, 0, y, W, dh);
+  },
+  /** Draw a full-screen scene (e.g. the hangar) shifted down by offset px; images are scaled to screen width. */
+  drawScene(ctx, key, W, H, offset, t, extra) {
+    const e = ASSETS[key];
+    if (!e) return;
+    if (e.type === 'procedural') { e.draw(ctx, W, H, offset, t, extra); return; }
+    const img = this.images[key];
+    if (img) ctx.drawImage(img, 0, offset, W, W * img.height / img.width);
   },
 };
 
@@ -617,6 +810,18 @@ const SOUNDS = {
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + d + 0.12);
       o.connect(g).connect(out); o.start(ac.currentTime + d); o.stop(ac.currentTime + d + 0.13);
     });
+  } },
+  shield: { type: 'procedural', play(ac, out) {
+    const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine';
+    o.frequency.setValueAtTime(300, ac.currentTime); o.frequency.exponentialRampToValueAtTime(1200, ac.currentTime + 0.25);
+    g.gain.setValueAtTime(0.0001, ac.currentTime); g.gain.linearRampToValueAtTime(0.18, ac.currentTime + 0.03); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.35);
+    o.connect(g).connect(out); o.start(); o.stop(ac.currentTime + 0.36);
+  } },
+  launch: { type: 'procedural', play(ac, out) {
+    const n = Sfx.noiseSource(ac), f = ac.createBiquadFilter(), g = ac.createGain();
+    f.type = 'bandpass'; f.Q.value = 1.2; f.frequency.setValueAtTime(200, ac.currentTime); f.frequency.exponentialRampToValueAtTime(1800, ac.currentTime + 1.0);
+    g.gain.setValueAtTime(0.0001, ac.currentTime); g.gain.linearRampToValueAtTime(0.35, ac.currentTime + 0.5); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 1.2);
+    n.connect(f).connect(g).connect(out); n.start(); n.stop(ac.currentTime + 1.2);
   } },
   shipHit: { type: 'procedural', play(ac, out) {
     const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sawtooth';
@@ -664,7 +869,7 @@ const Sfx = {
   },
   noiseSource(ac) {
     if (!this._noise) {
-      const len = ac.sampleRate * 0.6, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+      const len = ac.sampleRate * 1.3, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
       for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
       this._noise = buf;
     }
@@ -686,7 +891,7 @@ const Sfx = {
    `StorageBackend` so localStorage can be swapped for Capacitor
    Preferences by replacing that one object.
    ==================================================================== */
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;   // v2 added `upgrades`
 const StorageBackend = {
   KEY: 'spaceJunkRunner.save',
   read() { try { return localStorage.getItem(this.KEY); } catch (e) { return null; } },
@@ -700,6 +905,7 @@ const Save = {
       junk: 0,
       owned: ['scout'],
       equipped: 'scout',
+      upgrades: { lives: 0, shield: 0, damage: 0 },
       best: 0,
       settings: { sensitivity: CONFIG.input.sensitivityDefault, muted: false },
       tiltPermission: 'unknown',   // 'unknown' | 'granted' | 'denied'
@@ -711,11 +917,12 @@ const Save = {
       const raw = StorageBackend.read();
       if (raw) {
         const s = JSON.parse(raw);
-        // migrate older versions here when SAVE_VERSION changes
+        // v1 records simply lack `upgrades`; every field is validated so any version loads safely
         if (typeof s.junk === 'number') d.junk = s.junk;
         if (Array.isArray(s.owned)) d.owned = s.owned.filter(id => SKINS.some(k => k.id === id));
         if (!d.owned.includes('scout')) d.owned.unshift('scout');
         if (typeof s.equipped === 'string' && d.owned.includes(s.equipped)) d.equipped = s.equipped;
+        if (s.upgrades) for (const u of UPGRADES) { const v = s.upgrades[u.id]; if (Number.isInteger(v)) d.upgrades[u.id] = clamp(v, 0, u.tiers.length); }
         if (typeof s.best === 'number') d.best = s.best;
         if (s.settings) {
           if (typeof s.settings.sensitivity === 'number') d.settings.sensitivity = clamp(s.settings.sensitivity, CONFIG.input.sensitivityMin, CONFIG.input.sensitivityMax);
@@ -807,19 +1014,22 @@ const ctx = canvas.getContext('2d');
 let W = 1, H = 1, DPR = 1;
 
 const G = {
-  state: 'menu',           // menu | enableTilt | play | pause | gameover | hangar | settings
+  state: 'menu',           // menu | enableTilt | launch | play | pause | gameover | hangar | settings
   pausedByLandscape: false,
   time: 0,                 // run time (s)
   distance: 0,             // metres
   scroll: 0,               // current scroll speed (px/s)
   bgScroll: 0,             // background scroll offset (px) — keeps drifting on menus
-  lives: 0,
+  lives: 0, maxLives: 3,
   runJunk: 0,
-  ship: { x: 0, y: 0, w: 0, invuln: 0, fireTimer: 0, dead: false, deathTimer: 0 },
+  ship: { x: 0, y: 0, w: 0, invuln: 0, shield: 0, fireTimer: 0, dead: false, deathTimer: 0 },
   skin: SKINS[0],
-  bullets: [], asteroids: [], enemies: [], junk: [], particles: [],
-  spawn: { asteroidTimer: 0, enemyTimer: 0, enemyWait: 0, junkTimer: 0 },
-  bestAtStart: 0,
+  bullets: [], asteroids: [], enemies: [], junk: [], pickups: [], particles: [],
+  spawn: { asteroidTimer: 0, enemyTimer: 0, junkTimer: 0, shieldTimer: 0 },
+  // hangar scene (menus) and launch transition
+  hangarY: 0,              // 0 = docked, H = slid off the bottom
+  menuShip: { x: 0, y: 0 },
+  launch: { t: 0, x0: 0, y0: 0 },
 };
 
 /* Object pools — bullets, junk and particles are pre-allocated and recycled. */
@@ -831,28 +1041,45 @@ G.particles = makePool(CONFIG.particles.pool, () => ({ x: 0, y: 0, vx: 0, vy: 0,
 
 function difficulty() { return clamp(G.distance / CONFIG.world.rampDistance, 0, 1); }
 function currentSkin() { return SKINS.find(s => s.id === Save.data.equipped) || SKINS[0]; }
+function inMenuScene() { return G.state === 'menu' || G.state === 'hangar' || G.state === 'settings' || G.state === 'enableTilt'; }
 
 function resetRun() {
-  G.time = 0; G.distance = 0; G.runJunk = 0; G.lives = CONFIG.ship.lives;
-  G.ship.x = W / 2; G.ship.y = H * CONFIG.ship.yPos; G.ship.w = W * CONFIG.ship.width;
-  G.ship.invuln = 0; G.ship.fireTimer = 0; G.ship.dead = false; G.ship.deathTimer = 0;
+  G.time = 0; G.distance = 0; G.runJunk = 0;
+  G.maxLives = maxLives(); G.lives = G.maxLives;
+  G.ship.w = W * CONFIG.ship.width;
+  G.ship.invuln = 0; G.ship.shield = 0; G.ship.fireTimer = 0; G.ship.dead = false; G.ship.deathTimer = 0;
   G.skin = currentSkin();
-  G.asteroids.length = 0; G.enemies.length = 0;
+  G.asteroids.length = 0; G.enemies.length = 0; G.pickups.length = 0;
   for (const p of G.bullets) p.active = false;
   for (const p of G.junk) p.active = false;
   for (const p of G.particles) p.active = false;
   G.spawn.asteroidTimer = 0.6;
   G.spawn.enemyTimer = rand(CONFIG.enemy.firstSpawn[0], CONFIG.enemy.firstSpawn[1]);
   G.spawn.junkTimer = rand(CONFIG.junk.spawnInterval[0], CONFIG.junk.spawnInterval[1]);
-  G.bestAtStart = Save.data.best;
+  G.spawn.shieldTimer = rand(CONFIG.shield.firstSpawn[0], CONFIG.shield.firstSpawn[1]);
   Input.calibrate();
   Input.consumeTouchDelta();
   UI.updateHud(true);
 }
 
-function startRun() {
+/** Begin the launch transition: hangar slides away, ship glides to its flight position, then play starts. */
+function startLaunch() {
   resetRun();
   G.pausedByLandscape = false;
+  G.launch.t = 0;
+  G.launch.x0 = G.menuShip.x; G.launch.y0 = G.menuShip.y;
+  G.ship.x = G.menuShip.x; G.ship.y = G.menuShip.y;
+  Sfx.play('launch');
+  UI.show('launch');
+  if (UI.isLandscape()) UI.setLandscape(true);
+}
+
+/** Instant restart (Play again): no hangar, straight into the run. */
+function startRunImmediate() {
+  resetRun();
+  G.pausedByLandscape = false;
+  G.hangarY = H;
+  G.ship.x = W / 2; G.ship.y = H * CONFIG.ship.yPos;
   UI.show('play');
   if (UI.isLandscape()) UI.setLandscape(true);
 }
@@ -873,7 +1100,7 @@ function endRun() {
 /* ====================================================================
    SPAWNER — never blocks the player: there is always a free lane of
    at least spawn.laneWidth ship widths among the asteroids in the top
-   band, and junk / enemies never spawn on top of asteroids.
+   band, and junk / enemies / pickups never spawn on top of asteroids.
    ==================================================================== */
 function topBandAsteroids() { return G.asteroids.filter(a => a.y < H * CONFIG.spawn.topBand); }
 
@@ -944,6 +1171,17 @@ function spawnRandomJunk() {
   return false;
 }
 
+function spawnShieldPickup() {
+  const w = W * CONFIG.shield.pickupWidth;
+  for (let t = 0; t < CONFIG.spawn.tries; t++) {
+    const x = rand(w, W - w);
+    if (!clearOfAsteroids(x, -w, w)) continue;
+    G.pickups.push({ x, y: -w, w, key: 'pickup.shield', kind: 'shield', t: 0 });
+    return true;
+  }
+  return false;
+}
+
 function updateSpawner(dt) {
   const d = difficulty(), s = G.spawn;
   // asteroids
@@ -967,6 +1205,14 @@ function updateSpawner(dt) {
     if (spawnRandomJunk()) s.junkTimer = rand(CONFIG.junk.spawnInterval[0], CONFIG.junk.spawnInterval[1]);
     else s.junkTimer = 0.4;
   }
+  // shield pickups (only once the Shield upgrade is owned)
+  if (shieldDuration() > 0) {
+    s.shieldTimer -= dt;
+    if (s.shieldTimer <= 0) {
+      if (spawnShieldPickup()) s.shieldTimer = rand(CONFIG.shield.spawnInterval[0], CONFIG.shield.spawnInterval[1]);
+      else s.shieldTimer = 0.5;
+    }
+  }
 }
 
 /* ====================================================================
@@ -989,19 +1235,48 @@ function trailColor(skin, t) {
   if (tr === 'fire') return Math.random() < 0.5 ? '#ff5a1f' : '#ffb14a';
   return tr;
 }
+function emitTrail(skin, x, y, w, scale, t) {
+  const tc = trailColor(skin, t);
+  emitParticle(x + rand(-w * 0.08, w * 0.08), y + w * 0.5, rand(-0.02, 0.02) * W, (G.scroll * 0.6 + 0.2 * H) * scale, rand(0.18, 0.32), w * rand(0.08, 0.16), tc, false);
+}
 
 /* ====================================================================
    UPDATE
    ==================================================================== */
+function shipInvulnerable() { return G.ship.invuln > 0 || G.ship.shield > 0; }
+
 function hitShip() {
   const sh = G.ship;
-  if (sh.invuln > 0 || sh.dead) return;
+  if (shipInvulnerable() || sh.dead) return;
   G.lives--;
   Sfx.play('shipHit');
   explosion(sh.x, sh.y, '#ff6b3d', 18, sh.w * 0.25);
   if (G.lives <= 0) { sh.dead = true; sh.deathTimer = CONFIG.ship.deathDelay; explosion(sh.x, sh.y, '#ffffff', 40, sh.w * 0.35); Sfx.play('explosion'); }
   else sh.invuln = CONFIG.ship.invulnTime;
   UI.updateHud(true);
+}
+
+/** Launch transition: hangar slides down, ship glides to flight position, scroll speed ramps up. */
+function updateLaunch(dt) {
+  const L = G.launch, sh = G.ship;
+  L.t += dt;
+  const k = clamp(L.t / CONFIG.menu.launchDuration, 0, 1);
+  const slide = k * k;                              // ease-in: hangar accelerates away
+  G.hangarY = slide * H * 1.05;
+  const s = easeInOut(k);
+  sh.x = lerp(L.x0, W / 2, s);
+  sh.y = lerp(L.y0, H * CONFIG.ship.yPos, s);
+  G.scroll = slide * CONFIG.world.scrollStart * H;
+  G.bgScroll += G.scroll * dt;
+  const sw = sh.w * lerp(CONFIG.menu.shipScale, 1, s);
+  for (let i = 0; i < 2; i++) emitTrail(G.skin, sh.x, sh.y, sw, 2 + 3 * s, G.time + L.t);   // fast exhaust: the ship itself is moving down
+  // particles keep moving
+  for (const p of G.particles) {
+    if (!p.active) continue;
+    p.life -= dt; if (p.life <= 0) { p.active = false; continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt;
+  }
+  if (k >= 1) { G.hangarY = H * 1.05; UI.show('play'); }
 }
 
 function update(dt) {
@@ -1027,9 +1302,9 @@ function update(dt) {
       sh.fireTimer += 1 / CONFIG.ship.fireRate;
     }
     // ---- engine trail ----
-    const tc = trailColor(G.skin, G.time);
-    emitParticle(sh.x + rand(-sh.w * 0.08, sh.w * 0.08), sh.y + sh.w * 0.5, rand(-0.02, 0.02) * W, G.scroll * 0.6 + 0.2 * H, rand(0.18, 0.32), sh.w * rand(0.08, 0.16), tc, false);
+    emitTrail(G.skin, sh.x, sh.y, sh.w, 1, G.time);
     if (sh.invuln > 0) sh.invuln -= dt;
+    if (sh.shield > 0) { sh.shield -= dt; if (sh.shield <= 0) { sh.shield = 0; UI.updateHud(true); } }
   } else {
     sh.deathTimer -= dt;
     if (sh.deathTimer <= 0) { endRun(); return; }
@@ -1067,6 +1342,13 @@ function update(dt) {
     if (j.y > H + j.w) j.active = false;
   }
 
+  // ---- pickups ----
+  for (let i = G.pickups.length - 1; i >= 0; i--) {
+    const p = G.pickups[i];
+    p.t += dt; p.y += G.scroll * dt;
+    if (p.y > H + p.w) G.pickups.splice(i, 1);
+  }
+
   // ---- particles ----
   for (const p of G.particles) {
     if (!p.active) continue;
@@ -1077,15 +1359,16 @@ function update(dt) {
 
   // ---- collisions: bullets vs enemies ----
   const br = W * CONFIG.bullet.width * CONFIG.bullet.hitbox / 2;
+  const dmg = bulletDamage();
   for (const b of G.bullets) {
     if (!b.active) continue;
     for (let i = G.enemies.length - 1; i >= 0; i--) {
       const e = G.enemies[i], er = e.w * c.hitbox / 2;
       if (Math.hypot(b.x - e.x, b.y - e.y) < br + er) {
         b.active = false;
-        e.hp -= CONFIG.bullet.damage; e.flash = c.flashTime;
+        e.hp -= dmg; e.flash = c.flashTime;
         emitParticle(b.x, b.y, rand(-0.1, 0.1) * W, -0.1 * H, 0.15, b.w * 1.5, '#ffffff', false);
-        if (e.hp <= 0) {
+        if (e.hp <= 0.001) {
           Sfx.play('explosion');
           explosion(e.x, e.y, '#ff4fd8', 26, e.w * 0.2);
           for (let k = 0; k < c.junkDrop; k++) { const a = rand(0, TAU); spawnJunk(e.x, e.y, Math.cos(a) * 0.25 * W, Math.sin(a) * 0.12 * H - 0.05 * H); }
@@ -1110,13 +1393,37 @@ function update(dt) {
       UI.updateHud(true);
     }
   }
+  // ---- ship vs pickups ----
+  for (let i = G.pickups.length - 1; i >= 0; i--) {
+    const p = G.pickups[i];
+    if (Math.hypot(p.x - sh.x, p.y - sh.y) < sr + p.w * CONFIG.shield.hitbox / 2) {
+      G.pickups.splice(i, 1);
+      if (p.kind === 'shield') {
+        sh.shield = shieldDuration();
+        Sfx.play('shield');
+        emitParticle(sh.x, sh.y, 0, 0, 0.4, sh.w * 1.5, '#8fc6ff', true);
+        UI.updateHud(true);
+      }
+    }
+  }
   // ---- ship vs asteroids / enemies ----
-  if (sh.invuln <= 0) {
+  if (!shipInvulnerable()) {
     for (const a of G.asteroids) if (Math.hypot(a.x - sh.x, a.y - sh.y) < sr + a.w * CONFIG.asteroid.hitbox / 2) { hitShip(); break; }
-    if (sh.invuln <= 0 && !sh.dead) for (const e of G.enemies) if (Math.hypot(e.x - sh.x, e.y - sh.y) < sr + e.w * c.hitbox / 2) { hitShip(); break; }
+    if (!shipInvulnerable() && !sh.dead) for (const e of G.enemies) if (Math.hypot(e.x - sh.x, e.y - sh.y) < sr + e.w * c.hitbox / 2) { hitShip(); break; }
   }
 
   updateSpawner(dt);
+}
+
+/** Menu scene motion: hangar docks back in, ship hovers and glides between menu / hangar positions. */
+function updateMenuScene(dt) {
+  G.bgScroll += CONFIG.world.menuScroll * H * dt;
+  const k = 1 - Math.exp(-dt * CONFIG.menu.dockRate);
+  G.hangarY += (0 - G.hangarY) * k;
+  const tx = (G.state === 'hangar' ? CONFIG.menu.hangarShipX : CONFIG.menu.shipX) * W;
+  const ty = (G.state === 'hangar' ? CONFIG.menu.hangarShipY : CONFIG.menu.shipY) * H;
+  G.menuShip.x += (tx - G.menuShip.x) * k;
+  G.menuShip.y += (ty - G.menuShip.y) * k;
 }
 
 /* ====================================================================
@@ -1132,10 +1439,27 @@ function render(dt) {
   Assets.drawBackground(ctx, 'background.mid',  W, H, G.bgScroll * pf[1], renderTime);
   Assets.drawBackground(ctx, 'background.near', W, H, G.bgScroll * pf[2], renderTime);
 
+  if (inMenuScene() || G.state === 'launch') {
+    // hangar + docked ship (the ship is drawn larger than in flight and bobs gently)
+    const sw = W * CONFIG.ship.width * CONFIG.menu.shipScale;
+    const padX = G.state === 'launch' ? G.launch.x0 : G.menuShip.x;
+    if (G.hangarY < H * 1.05) Assets.drawScene(ctx, 'hangar', W, H, G.hangarY, renderTime, { padX });
+    drawParticles();   // exhaust goes under the ship here
+    if (G.state === 'launch') {
+      const k = clamp(G.launch.t / CONFIG.menu.launchDuration, 0, 1);
+      Assets.draw(ctx, G.skin.art.ship, G.ship.x, G.ship.y, lerp(sw, G.ship.w, easeInOut(k)), 0, renderTime);
+    } else {
+      const bob = Math.sin(renderTime * 2) * H * 0.006;
+      Assets.draw(ctx, currentSkin().art.ship, G.menuShip.x, G.menuShip.y + bob, sw, 0, renderTime);
+    }
+    return;
+  }
+
   const inRun = G.state === 'play' || G.state === 'pause';
   if (!inRun) return;
 
   for (const j of G.junk) if (j.active) Assets.draw(ctx, 'junk', j.x, j.y, j.w, j.rot, renderTime);
+  for (const p of G.pickups) Assets.draw(ctx, p.key, p.x, p.y, p.w, 0, renderTime);
   for (const a of G.asteroids) Assets.draw(ctx, a.key, a.x, a.y, a.w, a.rot, renderTime);
   for (const e of G.enemies) Assets.draw(ctx, 'enemy', e.x, e.y, e.w, 0, renderTime, { flash: e.flash / CONFIG.enemy.flashTime });
   for (const b of G.bullets) if (b.active) Assets.draw(ctx, 'bullet', b.x, b.y, b.w, 0, renderTime, { color: G.skin.art.bullet });
@@ -1144,9 +1468,12 @@ function render(dt) {
   if (!sh.dead) {
     const visible = sh.invuln <= 0 || Math.floor(sh.invuln * 10) % 2 === 0;
     if (visible) Assets.draw(ctx, G.skin.art.ship, sh.x, sh.y, sh.w, 0, renderTime);
+    if (sh.shield > 0) Assets.draw(ctx, 'shield.aura', sh.x, sh.y, sh.w * CONFIG.shield.auraSize, 0, renderTime, { remaining: sh.shield });
   }
+  drawParticles();
+}
 
-  // particles
+function drawParticles() {
   for (const p of G.particles) {
     if (!p.active) continue;
     const k = p.life / p.max;
@@ -1167,12 +1494,13 @@ function render(dt) {
    ==================================================================== */
 const UI = {
   screens: ['menu', 'enableTilt', 'pause', 'gameover', 'hangar', 'settings'],
-  hudCache: { lives: -1, dist: -1, junk: -1 },
+  hudCache: { lives: -1, dist: -1, junk: -1, shield: -1 },
+  hangarTab: 'skins',
   show(state) {
     G.state = state;
     for (const id of this.screens) $(id).classList.toggle('hidden', id !== state);
     $('hud').classList.toggle('hidden', !(state === 'play' || state === 'pause'));
-    if (state === 'menu') this.updateMenu();
+    if (state === 'menu') { this.updateMenu(); for (const p of G.particles) p.active = false; }
     if (state === 'hangar') this.renderHangar();
     if (state === 'settings') this.renderSettings();
     if (state === 'pause') $('pauseHint').textContent = Input.mode === 'tilt' ? 'Hold the phone comfortably, then tap Recalibrate to set the neutral angle.' : 'Steering by touch drag (no tilt sensor available).';
@@ -1185,11 +1513,13 @@ const UI = {
     const dist = Math.floor(G.distance);
     if (force || this.hudCache.lives !== G.lives) {
       let s = '';
-      for (let i = 0; i < CONFIG.ship.lives; i++) s += i < G.lives ? '<span>♥</span>' : '<span class="lost">♥</span>';
+      for (let i = 0; i < G.maxLives; i++) s += i < G.lives ? '<span>♥</span>' : '<span class="lost">♥</span>';
       $('hearts').innerHTML = s; this.hudCache.lives = G.lives;
     }
     if (force || this.hudCache.dist !== dist) { $('distance').textContent = dist + ' m'; this.hudCache.dist = dist; }
     if (force || this.hudCache.junk !== G.runJunk) { $('runJunk').textContent = '⬡ ' + G.runJunk; this.hudCache.junk = G.runJunk; }
+    const sh = Math.ceil(G.ship.shield);
+    if (force || this.hudCache.shield !== sh) { $('shieldHud').textContent = sh > 0 ? '◈ SHIELD ' + sh + 's' : ''; this.hudCache.shield = sh; }
   },
   pause(byLandscape) {
     if (G.state !== 'play') return;
@@ -1207,17 +1537,24 @@ const UI = {
     if (on) this.pause(true);
   },
   /* ---- Hangar ---- */
+  setHangarTab(tab) { this.hangarTab = tab; this.renderHangar(); },
   renderHangar() {
     $('hangarJunk').textContent = Save.data.junk;
-    const list = $('skinList'); list.innerHTML = '';
+    $('tabSkins').classList.toggle('active', this.hangarTab === 'skins');
+    $('tabUpgrades').classList.toggle('active', this.hangarTab === 'upgrades');
+    const list = $('hangarList'); list.innerHTML = '';
+    if (this.hangarTab === 'skins') this.renderSkinRows(list); else this.renderUpgradeRows(list);
+  },
+  renderSkinRows(list) {
     for (const skin of SKINS) {
       const owned = Save.data.owned.includes(skin.id), equipped = Save.data.equipped === skin.id;
-      const card = document.createElement('div');
-      card.className = 'skin' + (equipped ? ' equipped' : '');
-      const cv = document.createElement('canvas'); cv.width = 90 * Math.min(DPR, 2); cv.height = cv.width; cv.dataset.skin = skin.id;
+      const row = document.createElement('div'); row.className = 'row' + (equipped ? ' equipped' : '');
+      const head = document.createElement('div'); head.className = 'head';
+      const cv = document.createElement('canvas'); cv.width = 34 * Math.min(DPR, 2); cv.height = cv.width; cv.dataset.skin = skin.id;
       const name = document.createElement('div'); name.className = 'name'; name.textContent = skin.name;
       const price = document.createElement('div'); price.className = 'price';
       price.textContent = equipped ? 'Equipped' : owned ? 'Owned' : (skin.price === 0 ? 'Free' : '⬡ ' + skin.price);
+      head.append(cv, name, price);
       const btn = document.createElement('button'); btn.className = 'btn' + (owned ? '' : ' secondary');
       if (equipped) { btn.textContent = 'EQUIPPED'; btn.disabled = true; }
       else if (owned) { btn.textContent = 'EQUIP'; btn.onclick = () => { Save.data.equipped = skin.id; Save.save(); Sfx.play('pickup'); this.renderHangar(); }; }
@@ -1230,16 +1567,42 @@ const UI = {
           Sfx.play('pickup'); this.renderHangar();
         };
       }
-      card.append(cv, name, price, btn); list.appendChild(card);
+      row.append(head, btn); list.appendChild(row);
     }
     this.drawHangarPreviews();
   },
+  renderUpgradeRows(list) {
+    for (const up of UPGRADES) {
+      const lvl = upgradeLevel(up.id), maxed = lvl >= up.tiers.length, next = maxed ? null : up.tiers[lvl];
+      const row = document.createElement('div'); row.className = 'row' + (lvl > 0 ? ' equipped' : '');
+      const head = document.createElement('div'); head.className = 'head';
+      const icon = document.createElement('div'); icon.style.cssText = 'font-size:22px;width:34px;text-align:center;color:var(--accent)'; icon.textContent = up.icon;
+      const name = document.createElement('div'); name.className = 'name'; name.textContent = up.name;
+      const tiers = document.createElement('div'); tiers.className = 'tiers';
+      tiers.innerHTML = up.tiers.map((_, i) => i < lvl ? '●' : '<span class="off">●</span>').join('');
+      head.append(icon, name, tiers);
+      const desc = document.createElement('div'); desc.className = 'desc';
+      desc.textContent = up.describe(lvl) + (maxed ? ' · MAX' : ' → Next: ' + up.next(lvl));
+      const btn = document.createElement('button'); btn.className = 'btn' + (maxed ? '' : ' secondary');
+      if (maxed) { btn.textContent = 'MAXED'; btn.disabled = true; }
+      else {
+        btn.textContent = 'BUY · ⬡ ' + next.price;
+        btn.disabled = Save.data.junk < next.price;
+        btn.onclick = () => {
+          if (Save.data.junk < next.price) return;
+          Save.data.junk -= next.price; Save.data.upgrades[up.id] = lvl + 1; Save.save();
+          Sfx.play('shield'); this.renderHangar();
+        };
+      }
+      row.append(head, desc, btn); list.appendChild(row);
+    }
+  },
   drawHangarPreviews() {
-    const cvs = $('skinList').querySelectorAll('canvas');
+    const cvs = $('hangarList').querySelectorAll('canvas');
     for (const cv of cvs) {
       const skin = SKINS.find(s => s.id === cv.dataset.skin); if (!skin) continue;
       const c2 = cv.getContext('2d'); c2.clearRect(0, 0, cv.width, cv.height);
-      Assets.draw(c2, skin.art.ship, cv.width / 2, cv.height / 2, cv.width * 0.5, 0, renderTime);
+      Assets.draw(c2, skin.art.ship, cv.width / 2, cv.height / 2, cv.width * 0.55, 0, renderTime);
     }
   },
   /* ---- Settings ---- */
@@ -1248,7 +1611,7 @@ const UI = {
     $('sensVal').textContent = Save.data.settings.sensitivity.toFixed(1) + '×';
     $('muteVal').textContent = Save.data.settings.muted ? 'Off' : 'On';
     $('btnMute').textContent = Save.data.settings.muted ? 'UNMUTE' : 'MUTE';
-    $('steerInfo').textContent = Input.hasTilt ? 'Tilt sensor active.' : (Input.needsPermission() && Save.data.tiltPermission !== 'granted' ? 'Tilt permission will be requested when you press Play.' : 'No tilt data yet — touch drag is used as fallback.');
+    $('steerInfo').textContent = Input.hasTilt ? 'Tilt sensor active.' : (Input.needsPermission() && Save.data.tiltPermission !== 'granted' ? 'Tilt permission will be requested when you start a run.' : 'No tilt data yet — touch drag is used as fallback.');
   },
   /* ---- Debug ---- */
   updateDebug(fps) {
@@ -1257,15 +1620,18 @@ const UI = {
     $('debug').textContent =
       `fps ${fps.toFixed(0)}  state ${G.state}  ${W}x${H} dpr ${DPR}\n` +
       `input ${Input.mode}  raw ${Input.rawGamma === null ? '-' : Input.rawGamma.toFixed(1)}°  cal ${Input.calibratedAngle().toFixed(1)}°  axis ${Input.axis.toFixed(2)}\n` +
-      `scroll ${(G.scroll / H).toFixed(2)} sh/s  dist ${Math.floor(G.distance)} m  diff ${difficulty().toFixed(2)}\n` +
-      `ast ${counts.ast} enemy ${counts.en} bullet ${counts.bul} junk ${counts.junk} part ${counts.part}`;
+      `scroll ${(G.scroll / H).toFixed(2)} sh/s  dist ${Math.floor(G.distance)} m  diff ${difficulty().toFixed(2)}  dmg ${bulletDamage()}  shield ${G.ship.shield.toFixed(1)}\n` +
+      `ast ${counts.ast} enemy ${counts.en} bullet ${counts.bul} junk ${counts.junk} pick ${G.pickups.length} part ${counts.part}`;
   },
   bind() {
-    const on = (id, fn) => $(id).addEventListener('click', e => { e.preventDefault(); Sfx.unlock(); fn(e); });
-    on('btnPlay', () => this.onPlay());
-    on('btnAgain', () => this.onPlay());
+    const on = (id, fn) => $(id).addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); Sfx.unlock(); fn(e); });
+    // any tap on the menu that is not a button launches the run
+    $('menu').addEventListener('click', e => { if (e.target.closest('button')) return; Sfx.unlock(); this.onPlay(); });
+    on('btnAgain', () => this.onPlay(true));
     on('btnHangar', () => this.show('hangar'));
     on('btnSettings', () => this.show('settings'));
+    on('tabSkins', () => this.setHangarTab('skins'));
+    on('tabUpgrades', () => this.setHangarTab('upgrades'));
     on('btnHangarBack', () => this.show('menu'));
     on('btnSettingsBack', () => this.show('menu'));
     on('btnGoMenu', () => this.show('menu'));
@@ -1273,8 +1639,8 @@ const UI = {
     on('btnResume', () => this.resume());
     on('btnRecalibrate', () => { Input.calibrate(); this.resume(); });
     on('btnQuit', () => { Save.save(); this.show('menu'); });
-    on('btnEnableTilt', async () => { await Input.requestPermission(); startRun(); });
-    on('btnNoTilt', () => { startRun(); });
+    on('btnEnableTilt', async () => { await Input.requestPermission(); startLaunch(); });
+    on('btnNoTilt', () => { startLaunch(); });
     on('btnMute', () => {
       Save.data.settings.muted = !Save.data.settings.muted; Sfx.setMuted(Save.data.settings.muted); Save.save(); this.renderSettings();
     });
@@ -1282,8 +1648,9 @@ const UI = {
     slider.addEventListener('input', () => { Save.data.settings.sensitivity = parseFloat(slider.value); $('sensVal').textContent = Save.data.settings.sensitivity.toFixed(1) + '×'; });
     slider.addEventListener('change', () => { Save.save(); });
   },
-  /** Play pressed: handle the iOS motion permission flow, then start. */
-  async onPlay() {
+  /** Start pressed: handle the iOS motion permission flow, then launch (or restart instantly). */
+  async onPlay(instant) {
+    if (G.state !== 'menu' && G.state !== 'gameover') return;
     if (Input.needsPermission()) {
       if (Save.data.tiltPermission !== 'granted') {
         $('tiltDeniedNote').style.display = Save.data.tiltPermission === 'denied' ? 'block' : 'none';
@@ -1292,7 +1659,7 @@ const UI = {
       }
       await Input.requestPermission();   // already granted: resolves without a prompt
     } else Input.listen();
-    startRun();
+    if (instant) startRunImmediate(); else startLaunch();
   },
 };
 
@@ -1310,12 +1677,18 @@ function resize() {
   // rescale live entities so a resize mid-run keeps proportions
   const sx = W / oldW, sy = H / oldH;
   if (oldW > 1 && (sx !== 1 || sy !== 1)) {
-    const sh = G.ship; sh.x *= sx; sh.y = H * CONFIG.ship.yPos; sh.w = W * CONFIG.ship.width;
+    const sh = G.ship; sh.x *= sx; sh.y *= sy; sh.w = W * CONFIG.ship.width;
+    if (G.state === 'play' || G.state === 'pause') sh.y = H * CONFIG.ship.yPos;
     for (const a of G.asteroids) { a.x *= sx; a.y *= sy; a.w *= sx; a.extra *= sy; }
     for (const e of G.enemies) { e.x *= sx; e.baseX *= sx; e.y *= sy; e.w *= sx; }
+    for (const p of G.pickups) { p.x *= sx; p.y *= sy; p.w *= sx; }
     for (const b of G.bullets) { b.x *= sx; b.y *= sy; b.w *= sx; }
     for (const j of G.junk) { j.x *= sx; j.y *= sy; j.w *= sx; }
     for (const p of G.particles) { p.x *= sx; p.y *= sy; }
+    G.menuShip.x *= sx; G.menuShip.y *= sy; G.hangarY *= sy;
+    G.launch.x0 *= sx; G.launch.y0 *= sy;
+  } else if (oldW <= 1) {
+    G.menuShip.x = W * CONFIG.menu.shipX; G.menuShip.y = H * CONFIG.menu.shipY;
   }
   UI.setLandscape(UI.isLandscape());
 }
@@ -1328,7 +1701,9 @@ function frame(ts) {
   if (dt < 0) dt = 0;
 
   if (G.state === 'play') { update(dt); if (G.state === 'play') UI.updateHud(false); }
-  else G.bgScroll += CONFIG.world.menuScroll * H * dt;   // gentle drift behind menus
+  else if (G.state === 'launch') updateLaunch(dt);
+  else if (inMenuScene()) updateMenuScene(dt);
+  else G.bgScroll += CONFIG.world.menuScroll * H * dt;   // gentle drift behind game-over
   render(dt);
   if (G.state === 'hangar') { hangarTimer += dt; if (hangarTimer >= 1 / 20) { hangarTimer = 0; UI.drawHangarPreviews(); } }
 
