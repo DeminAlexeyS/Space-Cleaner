@@ -107,14 +107,16 @@
     pointer-events: none;
     padding: calc(var(--sat) + 10px) calc(var(--sar) + 12px) calc(var(--sab) + 10px) calc(var(--sal) + 12px);
   }
-  #hud .row { margin: 0; display: flex; justify-content: space-between; align-items: center; width: 100%; }
-  #hearts { font-size: 24px; letter-spacing: 1px; color: #ff4f6e; text-shadow: 0 0 8px rgba(255, 79, 110, 0.8); max-width: 34%; line-height: 1; }
+  /* three equal columns so the distance is exactly centred whatever the hearts / button widths */
+  #hud .hudRow { margin: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; width: 100%; }
+  #hearts { justify-self: start; display: flex; flex-wrap: wrap; gap: 2px 3px; width: 84px; font-size: 22px; line-height: 1; color: #ff4f6e; text-shadow: 0 0 8px rgba(255, 79, 110, 0.8); margin-top: 14px; }
   #hearts .lost { color: rgba(255, 255, 255, 0.18); text-shadow: none; }
   #hudCenter { text-align: center; }
   #distance { font-size: 26px; font-weight: 700; color: #fff; text-shadow: 0 0 10px var(--accent); }
   #runJunk { font-size: 15px; color: #9ff7ff; }
   #shieldHud { font-size: 13px; color: #6fb9ff; min-height: 16px; }
   #pauseBtn {
+    justify-self: end;
     pointer-events: auto; width: 56px; height: 56px; min-width: 0; min-height: 0; padding: 0;
     border-radius: 14px; font-size: 24px; background: rgba(10, 14, 30, 0.7); color: #fff;
     border: 2px solid rgba(255, 255, 255, 0.35); box-shadow: none;
@@ -170,7 +172,7 @@
 
 <!-- HUD (visible during play / pause) -->
 <div id="hud" class="screen hidden">
-  <div class="row">
+  <div class="hudRow">
     <div id="hearts"></div>
     <div id="hudCenter"><div id="distance">0 m</div><div id="runJunk">⬡ 0</div><div id="shieldHud"></div></div>
     <button id="pauseBtn" class="btn" aria-label="Pause">❚❚</button>
@@ -295,13 +297,14 @@ const CONFIG = {
     pool: 64,
   },
   asteroid: {
-    widths: [0.07, 0.11, 0.16],   // small, medium, large (w)
+    widths: [0.07, 0.11, 0.16, 0.32],   // small, medium, large, huge (w) — huge is rare, twice the large size
     spawnRateStart: 1.0,          // per second
     spawnRateMax: 2.5,            // per second (reached at world.rampDistance)
     extraSpeed: [0.02, 0.12],     // sh/s added to scroll speed (random)
     spinMax: 0.9,                 // rad/s (random, either direction)
     hitbox: 0.8,
-    sizeWeights: [0.45, 0.35, 0.20],
+    sizeWeights: [0.43, 0.34, 0.18, 0.05],   // spawn probability per size (huge ≈ 1 in 20)
+    keys: ['asteroid.small', 'asteroid.medium', 'asteroid.large', 'asteroid.huge'],
   },
   enemy: {
     hp: 3,
@@ -318,7 +321,10 @@ const CONFIG = {
   },
   junk: {
     width: 0.05,                  // w
-    spawnInterval: [4, 6],        // seconds (random in range, ~5 s)
+    spawnInterval: [2.5, 4.5],    // seconds between loose-junk spawns (single piece or cluster)
+    clusterChance: 0.4,           // probability that a spawn is a cluster instead of a single piece
+    clusterSize: [3, 6],          // pieces per cluster
+    clusterGap: 1.4,              // spacing between pieces, in junk widths
     value: 1,
     hitbox: 1.0,                  // slightly generous pickup
     spin: 2.5,                    // rad/s
@@ -336,6 +342,20 @@ const CONFIG = {
     scrollStart: 0.30,            // sh/s
     scrollMax: 0.80,              // sh/s
     rampDistance: 5000,           // metres at which difficulty / scroll are capped
+    sectorLength: [400, 600],     // metres between space-style changes (random in range)
+    sectorFade: 2.5,              // seconds to blend from one style to the next
+    // sector styles: hue (deg) + saturation (0..1) + wash (how strongly space itself is tinted).
+    // The run always starts with sectors[0]; every later sector is a random different entry.
+    sectors: [
+      { id: 'default', hue: 222, sat: 0.12, wash: 0 },
+      { id: 'crimson', hue: 350, sat: 0.75, wash: 0.9 },
+      { id: 'emerald', hue: 145, sat: 0.7,  wash: 0.8 },
+      { id: 'amber',   hue: 35,  sat: 0.8,  wash: 0.85 },
+      { id: 'violet',  hue: 280, sat: 0.7,  wash: 0.9 },
+      { id: 'ice',     hue: 195, sat: 0.6,  wash: 0.8 },
+      { id: 'toxic',   hue: 95,  sat: 0.75, wash: 0.8 },
+      { id: 'rust',    hue: 15,  sat: 0.6,  wash: 0.7 },
+    ],
     metersPerScreen: 50,          // 1 screen height of scroll = 50 m
     parallax: [0.15, 0.35, 0.70], // speed factor of the far / mid / near star layers
     menuScroll: 0.04,             // sh/s background drift behind the hangar
@@ -486,10 +506,13 @@ function makeAsteroidDrawer(seed) {
   }
   const craters = [];
   for (let i = 0; i < 3; i++) craters.push([-0.22 + rnd() * 0.44, -0.22 + rnd() * 0.44, 0.05 + rnd() * 0.08]);
-  return function (ctx, s) {
+  return function (ctx, s, t, extra) {
+    // colours follow the current sector theme (hue / saturation); the default theme is the neutral grey rock
+    const th = (extra && extra.theme) || DEFAULT_THEME;
+    const sat = Math.round(th.sat * 45);
     const g = ctx.createRadialGradient(-s * 0.15, -s * 0.15, s * 0.05, 0, 0, s * 0.55);
-    g.addColorStop(0, '#8d93a3'); g.addColorStop(0.6, '#4a4f5e'); g.addColorStop(1, '#23262f');
-    ctx.fillStyle = g; ctx.strokeStyle = '#b6bccc'; ctx.lineWidth = Math.max(1, s * 0.025); ctx.lineJoin = 'round';
+    g.addColorStop(0, `hsl(${th.hue},${sat}%,62%)`); g.addColorStop(0.6, `hsl(${th.hue},${sat}%,31%)`); g.addColorStop(1, `hsl(${th.hue},${sat}%,15%)`);
+    ctx.fillStyle = g; ctx.strokeStyle = `hsl(${th.hue},${sat}%,76%)`; ctx.lineWidth = Math.max(1, s * 0.025); ctx.lineJoin = 'round';
     ctx.beginPath();
     for (let i = 0; i < verts.length; i++) { const v = verts[i]; if (i === 0) ctx.moveTo(v[0] * s, v[1] * s); else ctx.lineTo(v[0] * s, v[1] * s); }
     ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -598,19 +621,27 @@ function makeStarLayer(cfg) {
   const stars = [];
   for (let i = 0; i < cfg.count; i++) stars.push({ x: rnd(), y: rnd(), s: cfg.size[0] + rnd() * (cfg.size[1] - cfg.size[0]), tw: rnd() * TAU, a: 0.5 + rnd() * 0.5 });
   const blobs = [];
-  if (cfg.nebula) for (let i = 0; i < 4; i++) blobs.push({ x: rnd(), y: rnd(), r: 0.25 + rnd() * 0.3, hue: 190 + rnd() * 120 });
-  return function (ctx, W, H, scroll, t) {
+  if (cfg.nebula) for (let i = 0; i < 4; i++) blobs.push({ x: rnd(), y: rnd(), r: 0.25 + rnd() * 0.3, hueOff: -40 + rnd() * 100 });
+  return function (ctx, W, H, scroll, t, extra) {
+    const th = (extra && extra.theme) || DEFAULT_THEME;
     if (cfg.nebula) {
+      // sector wash: tints all of space with the sector hue (invisible in the default sector)
+      if (th.wash > 0.01) {
+        const g = ctx.createLinearGradient(0, 0, 0, H);
+        g.addColorStop(0, `hsla(${th.hue},70%,16%,${(th.wash * 0.85).toFixed(3)})`);
+        g.addColorStop(1, `hsla(${th.hue + 30},60%,9%,${(th.wash * 0.6).toFixed(3)})`);
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      }
       for (const b of blobs) {
         const y = ((b.y * H + scroll) % H + H) % H;
         for (const yy of [y, y - H]) {
           const g = ctx.createRadialGradient(b.x * W, yy, 0, b.x * W, yy, b.r * W);
-          g.addColorStop(0, `hsla(${b.hue},80%,60%,0.10)`); g.addColorStop(1, 'rgba(0,0,0,0)');
+          g.addColorStop(0, `hsla(${th.hue + b.hueOff},80%,60%,${(0.10 + th.wash * 0.1).toFixed(3)})`); g.addColorStop(1, 'rgba(0,0,0,0)');
           ctx.fillStyle = g; ctx.fillRect(b.x * W - b.r * W, yy - b.r * W, b.r * W * 2, b.r * W * 2);
         }
       }
     }
-    ctx.fillStyle = cfg.color;
+    ctx.fillStyle = th.wash > 0.01 ? `hsl(${th.hue},${Math.round(th.wash * 55)}%,90%)` : cfg.color;
     for (const st of stars) {
       const y = ((st.y * H + scroll) % H + H) % H;
       const a = cfg.alpha * st.a * (0.75 + 0.25 * Math.sin(t * 2 + st.tw));
@@ -701,6 +732,7 @@ const ASSETS = {
   'asteroid.small':  { type: 'procedural', draw: makeAsteroidDrawer(11) },
   'asteroid.medium': { type: 'procedural', draw: makeAsteroidDrawer(23) },
   'asteroid.large':  { type: 'procedural', draw: makeAsteroidDrawer(47) },
+  'asteroid.huge':   { type: 'procedural', draw: makeAsteroidDrawer(83) },
   'enemy':  { type: 'procedural', draw: drawEnemy },
   'junk':   { type: 'procedural', draw: drawJunk },
   'bullet': { type: 'procedural', draw: drawBullet },
@@ -758,10 +790,10 @@ const Assets = {
     ctx.restore();
   },
   /** Draw a full-screen background layer with a vertical scroll offset (px); images tile vertically. */
-  drawBackground(ctx, key, W, H, scroll, t) {
+  drawBackground(ctx, key, W, H, scroll, t, extra) {
     const e = ASSETS[key];
     if (!e) return;
-    if (e.type === 'procedural') { e.draw(ctx, W, H, scroll, t); return; }
+    if (e.type === 'procedural') { e.draw(ctx, W, H, scroll, t, extra); return; }
     const img = this.images[key];
     if (!img) return;
     const dh = W * img.height / img.width;              // scale image to screen width
@@ -788,7 +820,7 @@ const SOUNDS = {
   shoot: { type: 'procedural', play(ac, out) {
     const o = ac.createOscillator(), g = ac.createGain(); o.type = 'square';
     o.frequency.setValueAtTime(880, ac.currentTime); o.frequency.exponentialRampToValueAtTime(220, ac.currentTime + 0.08);
-    g.gain.setValueAtTime(0.08, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.09);
+    g.gain.setValueAtTime(0.04, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.09);
     o.connect(g).connect(out); o.start(); o.stop(ac.currentTime + 0.1);
   } },
   enemyHit: { type: 'procedural', play(ac, out) {
@@ -1040,6 +1072,38 @@ G.junk      = makePool(CONFIG.junk.pool,      () => ({ x: 0, y: 0, w: 0, vx: 0, 
 G.particles = makePool(CONFIG.particles.pool, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 0, size: 0, color: '', ring: false }));
 
 function difficulty() { return clamp(G.distance / CONFIG.world.rampDistance, 0, 1); }
+
+/* ---- Sector themes: the look of space changes every few hundred metres ---- */
+const DEFAULT_THEME = CONFIG.world.sectors[0];
+const Theme = {
+  cur: { hue: 0, sat: 0, wash: 0 },   // blended values handed to the drawers
+  from: DEFAULT_THEME, to: DEFAULT_THEME, t: 1, nextAt: 0, index: 0,
+  reset() {
+    this.from = this.to = DEFAULT_THEME; this.index = 0; this.t = 1;
+    this.nextAt = rand(CONFIG.world.sectorLength[0], CONFIG.world.sectorLength[1]);
+    this.blend();
+  },
+  /** Pick a random sector different from the current one and start the fade. */
+  change() {
+    const n = CONFIG.world.sectors.length;
+    let i = this.index;
+    if (n > 1) while (i === this.index) i = Math.floor(Math.random() * n);
+    this.from = this.cur.hue === undefined ? this.to : { hue: this.cur.hue, sat: this.cur.sat, wash: this.cur.wash };
+    this.to = CONFIG.world.sectors[i]; this.index = i; this.t = 0;
+    this.nextAt += rand(CONFIG.world.sectorLength[0], CONFIG.world.sectorLength[1]);
+  },
+  update(dt, distance) {
+    if (distance >= this.nextAt) this.change();
+    if (this.t < 1) { this.t = Math.min(1, this.t + dt / CONFIG.world.sectorFade); this.blend(); }
+  },
+  blend() {
+    const k = easeInOut(this.t), a = this.from, b = this.to;
+    let dh = ((b.hue - a.hue + 540) % 360) - 180;         // shortest way round the hue circle
+    this.cur.hue = (a.hue + dh * k + 360) % 360;
+    this.cur.sat = lerp(a.sat, b.sat, k);
+    this.cur.wash = lerp(a.wash, b.wash, k);
+  },
+};
 function currentSkin() { return SKINS.find(s => s.id === Save.data.equipped) || SKINS[0]; }
 function inMenuScene() { return G.state === 'menu' || G.state === 'hangar' || G.state === 'settings' || G.state === 'enableTilt'; }
 
@@ -1057,6 +1121,7 @@ function resetRun() {
   G.spawn.enemyTimer = rand(CONFIG.enemy.firstSpawn[0], CONFIG.enemy.firstSpawn[1]);
   G.spawn.junkTimer = rand(CONFIG.junk.spawnInterval[0], CONFIG.junk.spawnInterval[1]);
   G.spawn.shieldTimer = rand(CONFIG.shield.firstSpawn[0], CONFIG.shield.firstSpawn[1]);
+  Theme.reset();
   Input.calibrate();
   Input.consumeTouchDelta();
   UI.updateHud(true);
@@ -1131,7 +1196,7 @@ function spawnAsteroid() {
     // avoid overlapping another asteroid at spawn height
     if (band.some(a => a.y < w && Math.hypot(a.x - x, a.y - (-w)) < (a.w + w) * 0.55)) continue;
     G.asteroids.push({
-      x, y: -w, w, key: ['asteroid.small', 'asteroid.medium', 'asteroid.large'][idx],
+      x, y: -w, w, key: c.keys[idx],
       rot: rand(0, TAU), spin: rand(-c.spinMax, c.spinMax), extra: rand(c.extraSpeed[0], c.extraSpeed[1]) * H,
     });
     return true;
@@ -1161,14 +1226,36 @@ function spawnJunk(x, y, vx, vy) {
   return true;
 }
 
+/** Loose junk: a single piece, or (clusterChance) a small formation that drifts in together. */
 function spawnRandomJunk() {
-  const w = W * CONFIG.junk.width;
+  const c = CONFIG.junk, w = W * c.width;
+  const cluster = Math.random() < c.clusterChance;
+  const n = cluster ? Math.floor(rand(c.clusterSize[0], c.clusterSize[1] + 1)) : 1;
+  const offsets = clusterFormation(n, w * c.clusterGap);
+  // bounding box of the formation, so it fits on screen
+  let minX = 0, maxX = 0; for (const o of offsets) { minX = Math.min(minX, o[0]); maxX = Math.max(maxX, o[0]); }
   for (let t = 0; t < CONFIG.spawn.tries; t++) {
-    const x = rand(w, W - w);
-    if (!clearOfAsteroids(x, -w, w)) continue;
-    return spawnJunk(x, -w, 0, 0);
+    const x = rand(w - minX, W - w - maxX);
+    if (!offsets.every(o => clearOfAsteroids(x + o[0], -w + o[1], w))) continue;
+    for (const o of offsets) spawnJunk(x + o[0], -w + o[1], 0, 0);
+    return true;
   }
   return false;
+}
+
+/** Relative positions for a cluster of n pieces (y offsets are negative: the group enters over time). */
+function clusterFormation(n, gap) {
+  if (n === 1) return [[0, 0]];
+  const shape = Math.floor(rand(0, 3)), out = [];
+  if (shape === 0) {            // horizontal line
+    for (let i = 0; i < n; i++) out.push([(i - (n - 1) / 2) * gap, 0]);
+  } else if (shape === 1) {     // V / arrow pointing down
+    for (let i = 0; i < n; i++) { const k = i - (n - 1) / 2; out.push([k * gap, -Math.abs(k) * gap]); }
+  } else {                      // diamond / blob
+    const cols = Math.ceil(Math.sqrt(n));
+    for (let i = 0; i < n; i++) { const r = Math.floor(i / cols), col = i % cols; out.push([(col - (cols - 1) / 2) * gap + (r % 2 ? gap / 2 : 0), -r * gap]); }
+  }
+  return out;
 }
 
 function spawnShieldPickup() {
@@ -1288,6 +1375,7 @@ function update(dt) {
 
   if (!sh.dead) {
     G.distance += (G.scroll / H) * CONFIG.world.metersPerScreen * dt;
+    Theme.update(dt, G.distance);
     // ---- steering ----
     Input.update(dt);
     const range = W / 2 - sh.w / 2;
@@ -1435,9 +1523,11 @@ function render(dt) {
   ctx.clearRect(0, 0, W, H);
   // background (3-layer parallax)
   const pf = CONFIG.world.parallax;
-  Assets.drawBackground(ctx, 'background.far',  W, H, G.bgScroll * pf[0], renderTime);
-  Assets.drawBackground(ctx, 'background.mid',  W, H, G.bgScroll * pf[1], renderTime);
-  Assets.drawBackground(ctx, 'background.near', W, H, G.bgScroll * pf[2], renderTime);
+  const inRunNow = G.state === 'play' || G.state === 'pause' || G.state === 'gameover';
+  const themeX = { theme: inRunNow ? Theme.cur : DEFAULT_THEME };
+  Assets.drawBackground(ctx, 'background.far',  W, H, G.bgScroll * pf[0], renderTime, themeX);
+  Assets.drawBackground(ctx, 'background.mid',  W, H, G.bgScroll * pf[1], renderTime, themeX);
+  Assets.drawBackground(ctx, 'background.near', W, H, G.bgScroll * pf[2], renderTime, themeX);
 
   if (inMenuScene() || G.state === 'launch') {
     // hangar + docked ship (the ship is drawn larger than in flight and bobs gently)
@@ -1460,7 +1550,7 @@ function render(dt) {
 
   for (const j of G.junk) if (j.active) Assets.draw(ctx, 'junk', j.x, j.y, j.w, j.rot, renderTime);
   for (const p of G.pickups) Assets.draw(ctx, p.key, p.x, p.y, p.w, 0, renderTime);
-  for (const a of G.asteroids) Assets.draw(ctx, a.key, a.x, a.y, a.w, a.rot, renderTime);
+  for (const a of G.asteroids) Assets.draw(ctx, a.key, a.x, a.y, a.w, a.rot, renderTime, themeX);
   for (const e of G.enemies) Assets.draw(ctx, 'enemy', e.x, e.y, e.w, 0, renderTime, { flash: e.flash / CONFIG.enemy.flashTime });
   for (const b of G.bullets) if (b.active) Assets.draw(ctx, 'bullet', b.x, b.y, b.w, 0, renderTime, { color: G.skin.art.bullet });
 
@@ -1620,7 +1710,7 @@ const UI = {
     $('debug').textContent =
       `fps ${fps.toFixed(0)}  state ${G.state}  ${W}x${H} dpr ${DPR}\n` +
       `input ${Input.mode}  raw ${Input.rawGamma === null ? '-' : Input.rawGamma.toFixed(1)}°  cal ${Input.calibratedAngle().toFixed(1)}°  axis ${Input.axis.toFixed(2)}\n` +
-      `scroll ${(G.scroll / H).toFixed(2)} sh/s  dist ${Math.floor(G.distance)} m  diff ${difficulty().toFixed(2)}  dmg ${bulletDamage()}  shield ${G.ship.shield.toFixed(1)}\n` +
+      `sector ${Theme.to.id} next ${Math.floor(Theme.nextAt)} m  scroll ${(G.scroll / H).toFixed(2)} sh/s  dist ${Math.floor(G.distance)} m  diff ${difficulty().toFixed(2)}  dmg ${bulletDamage()}  shield ${G.ship.shield.toFixed(1)}\n` +
       `ast ${counts.ast} enemy ${counts.en} bullet ${counts.bul} junk ${counts.junk} pick ${G.pickups.length} part ${counts.part}`;
   },
   bind() {
