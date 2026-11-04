@@ -344,7 +344,7 @@ const CONFIG = {
     scrollMax: 1.20,              // sh/s
     rampDistance: 5000,           // metres at which difficulty / scroll are capped
     sectorLength: [300, 600],     // metres between space-style changes (random in range)
-    sectorFade: 1.5,              // seconds to blend from one style to the next
+    sectorFade: 2.0,              // seconds to blend from one style to the next
     // sector styles: hue (deg) + saturation (0..1) + wash (how strongly space itself is tinted).
     // The run always starts with sectors[0]; every later sector is a random different entry.
     sectors: [
@@ -821,7 +821,7 @@ const SOUNDS = {
   shoot: { type: 'procedural', play(ac, out) {
     const o = ac.createOscillator(), g = ac.createGain(); o.type = 'square';
     o.frequency.setValueAtTime(880, ac.currentTime); o.frequency.exponentialRampToValueAtTime(220, ac.currentTime + 0.08);
-    g.gain.setValueAtTime(0.02, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.09);
+    g.gain.setValueAtTime(0.012, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.09);
     o.connect(g).connect(out); o.start(); o.stop(ac.currentTime + 0.1);
   } },
   enemyHit: { type: 'procedural', play(ac, out) {
