@@ -298,9 +298,9 @@ const CONFIG = {
   },
   asteroid: {
     widths: [0.07, 0.11, 0.16, 0.32],   // small, medium, large, huge (w) — huge is rare, twice the large size
-    spawnRateStart: 1.0,          // per second
-    spawnRateMax: 2.5,            // per second (reached at world.rampDistance)
-    extraSpeed: [0.02, 0.12],     // sh/s added to scroll speed (random)
+    spawnRateStart: 2.0,          // per second
+    spawnRateMax: 4.5,            // per second (reached at world.rampDistance)
+    extraSpeed: [0.04, 0.18],     // sh/s added to scroll speed (random)
     spinMax: 0.9,                 // rad/s (random, either direction)
     hitbox: 0.8,
     sizeWeights: [0.43, 0.34, 0.18, 0.05],   // spawn probability per size (huge ≈ 1 in 20)
@@ -322,7 +322,7 @@ const CONFIG = {
   junk: {
     width: 0.05,                  // w
     spawnInterval: [2.5, 4.5],    // seconds between loose-junk spawns (single piece or cluster)
-    rampPerKm: 0.5,               // junk frequency multiplier grows by this per 1000 m: ×1.5 at 1 km, ×2 at 2 km, ×2.5 at 3 km…
+    rampPerKm: 0.9,               // junk frequency multiplier grows by this per 1000 m: ×1.5 at 1 km, ×2 at 2 km, ×2.5 at 3 km…
     clusterChance: 0.4,           // probability that a spawn is a cluster instead of a single piece
     clusterSize: [3, 6],          // pieces per cluster
     clusterGap: 1.4,              // spacing between pieces, in junk widths
@@ -341,7 +341,7 @@ const CONFIG = {
   },
   world: {
     scrollStart: 0.30,            // sh/s
-    scrollMax: 0.80,              // sh/s
+    scrollMax: 1.60,              // sh/s
     rampDistance: 5000,           // metres at which difficulty / scroll are capped
     sectorLength: [400, 600],     // metres between space-style changes (random in range)
     sectorFade: 2.5,              // seconds to blend from one style to the next
