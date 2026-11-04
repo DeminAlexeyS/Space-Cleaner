@@ -322,6 +322,7 @@ const CONFIG = {
   junk: {
     width: 0.05,                  // w
     spawnInterval: [2.5, 4.5],    // seconds between loose-junk spawns (single piece or cluster)
+    rampPerKm: 0.5,               // junk frequency multiplier grows by this per 1000 m: ×1.5 at 1 km, ×2 at 2 km, ×2.5 at 3 km…
     clusterChance: 0.4,           // probability that a spawn is a cluster instead of a single piece
     clusterSize: [3, 6],          // pieces per cluster
     clusterGap: 1.4,              // spacing between pieces, in junk widths
@@ -1072,6 +1073,8 @@ G.junk      = makePool(CONFIG.junk.pool,      () => ({ x: 0, y: 0, w: 0, vx: 0, 
 G.particles = makePool(CONFIG.particles.pool, () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 0, size: 0, color: '', ring: false }));
 
 function difficulty() { return clamp(G.distance / CONFIG.world.rampDistance, 0, 1); }
+/** Loose-junk frequency multiplier: 1 at the start, +rampPerKm per kilometre, uncapped. */
+function junkRate() { return 1 + (G.distance / 1000) * CONFIG.junk.rampPerKm; }
 
 /* ---- Sector themes: the look of space changes every few hundred metres ---- */
 const DEFAULT_THEME = CONFIG.world.sectors[0];
@@ -1289,7 +1292,7 @@ function updateSpawner(dt) {
   // loose junk
   s.junkTimer -= dt;
   if (s.junkTimer <= 0) {
-    if (spawnRandomJunk()) s.junkTimer = rand(CONFIG.junk.spawnInterval[0], CONFIG.junk.spawnInterval[1]);
+    if (spawnRandomJunk()) s.junkTimer = rand(CONFIG.junk.spawnInterval[0], CONFIG.junk.spawnInterval[1]) / junkRate();
     else s.junkTimer = 0.4;
   }
   // shield pickups (only once the Shield upgrade is owned)
@@ -1710,7 +1713,7 @@ const UI = {
     $('debug').textContent =
       `fps ${fps.toFixed(0)}  state ${G.state}  ${W}x${H} dpr ${DPR}\n` +
       `input ${Input.mode}  raw ${Input.rawGamma === null ? '-' : Input.rawGamma.toFixed(1)}°  cal ${Input.calibratedAngle().toFixed(1)}°  axis ${Input.axis.toFixed(2)}\n` +
-      `sector ${Theme.to.id} next ${Math.floor(Theme.nextAt)} m  scroll ${(G.scroll / H).toFixed(2)} sh/s  dist ${Math.floor(G.distance)} m  diff ${difficulty().toFixed(2)}  dmg ${bulletDamage()}  shield ${G.ship.shield.toFixed(1)}\n` +
+      `sector ${Theme.to.id} next ${Math.floor(Theme.nextAt)} m  junk ×${junkRate().toFixed(2)}  scroll ${(G.scroll / H).toFixed(2)} sh/s  dist ${Math.floor(G.distance)} m  diff ${difficulty().toFixed(2)}  dmg ${bulletDamage()}  shield ${G.ship.shield.toFixed(1)}\n` +
       `ast ${counts.ast} enemy ${counts.en} bullet ${counts.bul} junk ${counts.junk} pick ${G.pickups.length} part ${counts.part}`;
   },
   bind() {
