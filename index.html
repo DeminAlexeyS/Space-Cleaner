@@ -298,9 +298,9 @@ const CONFIG = {
   },
   asteroid: {
     widths: [0.07, 0.11, 0.16, 0.32],   // small, medium, large, huge (w) — huge is rare, twice the large size
-    spawnRateStart: 2.0,          // per second
+    spawnRateStart: 1.2,          // per second
     spawnRateMax: 4.5,            // per second (reached at world.rampDistance)
-    extraSpeed: [0.04, 0.18],     // sh/s added to scroll speed (random)
+    extraSpeed: [0.02, 0.18],     // sh/s added to scroll speed (random)
     spinMax: 0.9,                 // rad/s (random, either direction)
     hitbox: 0.8,
     sizeWeights: [0.43, 0.34, 0.18, 0.05],   // spawn probability per size (huge ≈ 1 in 20)
@@ -313,7 +313,7 @@ const CONFIG = {
     firstSpawn: [6, 10],          // seconds into the run
     intervalStart: 9,             // average seconds between enemies at start
     intervalMin: 4,               // never more than 1 per 4 s
-    weaveAmp: 0.09,               // w
+    weaveAmp: 0.06,               // w
     weaveFreq: 0.9,               // Hz
     junkDrop: 3,
     hitbox: 0.8,
@@ -321,10 +321,10 @@ const CONFIG = {
   },
   junk: {
     width: 0.05,                  // w
-    spawnInterval: [2.5, 4.5],    // seconds between loose-junk spawns (single piece or cluster)
+    spawnInterval: [1.7, 4.5],    // seconds between loose-junk spawns (single piece or cluster)
     rampPerKm: 0.9,               // junk frequency multiplier grows by this per 1000 m: ×1.5 at 1 km, ×2 at 2 km, ×2.5 at 3 km…
     clusterChance: 0.4,           // probability that a spawn is a cluster instead of a single piece
-    clusterSize: [3, 6],          // pieces per cluster
+    clusterSize: [3, 9],          // pieces per cluster
     clusterGap: 1.4,              // spacing between pieces, in junk widths
     value: 1,
     hitbox: 1.0,                  // slightly generous pickup
@@ -411,13 +411,13 @@ const UPGRADES = [
   },
   {
     id: 'shield', name: 'Shield', icon: '◈',
-    tiers: [{ price: 200, duration: 3 }, { price: 600, duration: 5 }, { price: 1500, duration: 8 }],
+    tiers: [{ price: 100, duration: 3 }, { price: 300, duration: 5 }, { price: 1000, duration: 8 }],
     describe: lvl => lvl === 0 ? 'No shield pickups yet' : `Shield pickups last ${UPGRADES[1].tiers[lvl - 1].duration} s`,
     next: lvl => lvl === 0 ? `Shield pickups appear: ${UPGRADES[1].tiers[0].duration} s of invulnerability` : `Shield lasts ${UPGRADES[1].tiers[lvl].duration} s`,
   },
   {
     id: 'damage', name: 'Gun Damage', icon: '⚡',
-    tiers: [{ price: 800, hits: 2 }, { price: 3000, hits: 1 }],
+    tiers: [{ price: 800, hits: 2 }, { price: 2000, hits: 1 }],
     describe: lvl => `${lvl === 0 ? CONFIG.enemy.hp : UPGRADES[2].tiers[lvl - 1].hits} hit${(lvl === 0 ? CONFIG.enemy.hp : UPGRADES[2].tiers[lvl - 1].hits) === 1 ? '' : 's'} to destroy an enemy`,
     next: lvl => `Enemies die in ${UPGRADES[2].tiers[lvl].hits} hit${UPGRADES[2].tiers[lvl].hits === 1 ? '' : 's'}`,
   },
