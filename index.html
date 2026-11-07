@@ -447,7 +447,7 @@ const UPGRADES = [
   },
   {
     id: 'rocket', name: 'Rockets', icon: '\u{1F680}',
-    tiers: [{ price: 400, duration: 2 }, { price: 1000, duration: 4 }, { price: 2400, duration: 6 }],
+    tiers: [{ price: 400, duration: 3 }, { price: 1000, duration: 5 }, { price: 2400, duration: 7 }],
     describe: lvl => lvl === 0 ? 'No rocket pickups yet' : `Rocket pickups last ${tiersOf('rocket')[lvl - 1].duration} s`,
     next: lvl => lvl === 0 ? `Rocket pickups appear: ${tiersOf('rocket')[0].duration} s of rockets that one-shot enemies and break asteroids` : `Rockets last ${tiersOf('rocket')[lvl].duration} s`,
   },
