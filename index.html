@@ -93,7 +93,7 @@
   #menu .record b { color: #ffd84f; }
   #menu .hint {
     font-size: clamp(18px, 5.5vw, 24px); font-weight: 700; letter-spacing: 2px; color: #fff;
-    text-shadow: 0 0 12px var(--accent); animation: pulse 1.6s ease-in-out infinite; pointer-events: none;
+    text-shadow: 0 2px 3px rgba(0,0,0,0.85), 0 0 14px rgba(0,0,0,0.7); animation: pulse 1.6s ease-in-out infinite; pointer-events: none;
     position: absolute; left: 20px; right: 20px; bottom: calc(var(--sab) + 108px);
   }
   @keyframes pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
@@ -165,6 +165,146 @@
   }
   #debug.hidden { display: none; }
   .note { max-width: 360px; font-size: 16px; line-height: 1.45; color: var(--dim); }
+:root {
+  --ui-groove: url("art/ui_slider_groove.png");
+  --ui-knob: url("art/ui_slider_knob.png");
+  --ui-pause: url("art/ui_pause.png");
+}
+
+/* ===== painted UI skin: steel plates & hand-painted buttons (9-slice border-images) ===== */
+.btn, .btn.secondary, .btn.danger, .btn.small {
+  background: transparent; box-shadow: none; border-radius: 0; border: 16px solid transparent;
+  border-image-slice: 60 fill; border-image-width: 16px; border-image-repeat: stretch;
+  padding: 4px 14px; font-weight: 800; letter-spacing: 1px; text-shadow: none; min-height: 60px;
+  border-image-source: var(--ui-btn-primary); color: #3b2410;
+}
+.btn.secondary { border-image-source: var(--ui-btn-secondary); color: #fff3d6; }
+.btn.danger { border-image-source: var(--ui-btn-danger); color: #fff3d6; }
+.btn.small { min-height: 52px; min-width: 120px; font-size: 17px; }
+.btn:disabled { opacity: 0.55; filter: grayscale(0.55); }
+.tabs .btn, .tabs .btn:not(.active) {
+  background: transparent; box-shadow: none; border: 14px solid transparent; border-image-slice: 72 fill; border-image-width: 14px;
+  border-image-source: var(--ui-tab-off); color: #cfe3ea; min-height: 0; padding: 2px 12px; font-size: 16px;
+}
+.tabs .btn.active { border-image-source: var(--ui-tab-on); color: #3b2410; }
+#pauseBtn { border: 0; border-image: none; background: var(--ui-pause) center / contain no-repeat; color: transparent; font-size: 0; width: 58px; height: 58px; min-height: 0; padding: 0; }
+.logo { width: min(78vw, 330px); height: auto; filter: drop-shadow(0 5px 7px rgba(0, 0, 0, 0.6)); margin-bottom: 4px; }
+#hearts img { width: 25px; height: 23px; }
+#hangarList::-webkit-scrollbar { display: none; }
+
+h1, h2 { color: #fff3d6; text-shadow: 0 3px 5px rgba(0, 0, 0, 0.85); letter-spacing: 2px; }
+.setting .btn.small { border-image-source: var(--ui-btn-primary); color: #3b2410; }
+/* settings panel + slider */
+.setting { background: transparent; border-radius: 0; border: 22px solid transparent; border-image: var(--ui-panel) 70 fill / 22px stretch; padding: 2px 6px; color: #fff3d6; }
+input[type=range]::-webkit-slider-runnable-track { height: 24px; background: var(--ui-groove) center / 100% 100% no-repeat; border-radius: 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 44px; height: 44px; margin-top: -10px; border-radius: 0; background: var(--ui-knob) center / contain no-repeat; box-shadow: none; }
+input[type=range]::-moz-range-track { height: 24px; background: var(--ui-groove) center / 100% 100% no-repeat; border-radius: 0; }
+input[type=range]::-moz-range-thumb { width: 44px; height: 44px; border: 0; border-radius: 0; background: var(--ui-knob) center / contain no-repeat; }
+
+/* shop: ship on top, horizontal carousel of big cards below */
+#hangar .hangarMid { flex: 1 1 auto; min-height: 80px; width: 100%; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+#previewName { font-size: 22px; font-weight: 800; letter-spacing: 3px; color: #fff3d6; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85); padding-bottom: 4px; min-height: 30px; }
+#hangarList {
+  --cw: min(250px, 66vw);
+  flex: 0 0 auto; height: min(40vh, 340px); min-height: 0; width: calc(100% + 40px); margin: 0 -20px; display: flex; flex-direction: row; gap: 12px;
+  overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; touch-action: pan-x; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  padding: 4px calc(50% - var(--cw) / 2);
+}
+.card {
+  flex: 0 0 var(--cw); scroll-snap-align: center; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 4px;
+  border: 20px solid transparent; border-image: var(--ui-card) 60 fill / 20px stretch; padding: 0 2px 2px; text-align: center; color: #fff3d6; cursor: pointer;
+}
+.card.selected { border-image-source: var(--ui-card-sel); border-image-slice: 88 fill; border-width: 24px; border-image-width: 24px; }
+.card .thumb { width: 170px; height: 132px; flex: 0 0 auto; }
+.card .iconBig { width: 92px; height: 92px; flex: 0 0 auto; display: block; }
+.card .name { font-weight: 800; font-size: 20px; letter-spacing: 1px; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35); }
+.card .tag {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 96px; font-weight: 800; font-size: 15px; color: #6a3320;
+  border: 9px solid transparent; border-image: var(--ui-tag) 40 fill / 9px stretch; padding: 1px 8px;
+}
+.card .tag img, .card .btn img { width: 18px; height: 18px; flex: 0 0 auto; }
+.card .tiers { display: flex; gap: 6px; justify-content: center; }
+.card .tiers img { width: 17px; height: 17px; }
+.card .desc { font-size: 13px; line-height: 1.25; color: #dbe6f2; padding: 0 4px; }
+.card .btn { width: 100%; min-height: 50px; font-size: 16px; padding: 0 6px; gap: 6px; }
+@media (max-height: 720px) { .card .thumb { height: 70px; } .card .iconBig { width: 64px; height: 64px; } .card .desc { font-size: 12px; } }
+
+/* ===== Fredoka (embedded, latin) ===== */
+@font-face { font-family: 'Fredoka'; font-weight: 400; font-style: normal; src: url(fonts/fredoka-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Fredoka'; font-weight: 600 800; font-style: normal; src: url(fonts/fredoka-latin-700-normal.woff2) format('woff2'); }
+html, body, button, input, .btn { font-family: 'Fredoka', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+/* main screen */
+#menu .hint {
+  font-size: clamp(24px, 7.2vw, 32px); line-height: 1.12; letter-spacing: 2px; font-weight: 700;
+  bottom: calc(var(--sab) + 96px); text-shadow: 0 3px 4px rgba(0, 0, 0, 0.9), 0 0 18px rgba(0, 0, 0, 0.75);
+}
+#menu .top .sub, #menu .top .record { text-shadow: 0 2px 3px rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 0, 0, 0.7); }
+:root {
+}
+
+/* ===== v5: one stretched bitmap per element. The 9-slice border-image left hairline seams at fractional pixel ratios (most Android phones). ===== */
+.btn, .btn.secondary, .btn.danger, .btn.small {
+  border: 0; border-image: none; border-radius: 0; background: var(--ui-btn-primary) center / 100% 100% no-repeat;
+  padding: 0 26px; height: 60px; min-height: 60px;
+}
+.btn.secondary { background-image: var(--ui-btn-secondary); }
+.btn.danger { background-image: var(--ui-btn-danger); }
+.btn.small { height: 54px; min-height: 54px; }
+.btn:active { transform: none; filter: none; opacity: 0.8; }
+.btn:disabled { opacity: 1; filter: none; background-image: var(--ui-btn-disabled); color: #6d6a5e; }
+.tabs .btn, .tabs .btn:not(.active) {
+  border: 0; border-image: none; background: var(--ui-tab-off) center / 100% 100% no-repeat; width: 156px; min-width: 156px; height: 48px; min-height: 48px; padding: 0 12px;
+}
+.tabs .btn.active { background-image: var(--ui-tab-on); }
+.setting { border: 0; border-image: none; background: var(--ui-panel) center / 100% 100% no-repeat; padding: 24px 32px 22px; }
+.setting .btn { align-self: center; min-width: 210px; }
+.setting .btn.small { background-image: var(--ui-btn-primary); color: #3b2410; }
+.hangarTop { gap: 8px; }
+.hangarTop .sub { margin-top: 12px; }
+#hangarList[data-tab=skins] { height: 196px; }
+.card { border: 0; border-image: none; background: var(--ui-card) center / 100% 100% no-repeat; padding: 28px 22px 24px; }
+#hangarList[data-tab=skins] .card { background-image: var(--ui-card-wide); justify-content: center; gap: 8px; padding: 22px 22px 20px; }
+.card.selected, #hangarList[data-tab=skins] .card.selected { border-width: 0; background-image: var(--ui-card-sel); }
+#hangarList[data-tab=upgrades] .card.selected { background-image: var(--ui-card); border-radius: 24px; box-shadow: 0 0 0 3px #e5a93a, 0 0 16px rgba(229, 169, 58, 0.45); }
+.card .tag { border: 0; border-image: none; background: var(--ui-tag) center / 100% 100% no-repeat; padding: 0 26px; min-width: 118px; height: 40px; }
+.card .btn { height: 54px; min-height: 54px; padding: 0 8px; }
+.card .name { font-size: 24px; }
+
+/* ===== v6: plates are drawn by canvas (see Plates); layout gets real breathing room ===== */
+.btn:not(#pauseBtn), .card, .tag, .setting { position: relative; isolation: isolate; background: none !important; border: 0 !important; border-image: none !important; box-shadow: none !important; border-radius: 0; }
+.plate { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+.btn, .btn.secondary, .btn.danger { height: 60px; min-height: 60px; padding: 0 36px; }
+.btn.small { height: 56px; min-height: 56px; }
+.tabs { gap: 12px; }
+.tabs .btn, .tabs .btn:not(.active) { width: 164px; min-width: 164px; height: 58px; min-height: 58px; padding: 0 16px; font-size: 17px; color: #fff3d6; }
+.tabs .btn.active { color: #3b2410; }
+.btn:disabled { color: #6d6a5e; }
+.screen:not(#hangar):not(#menu) > .btn { width: 280px; }
+.setting { padding: 36px 40px 34px; }
+.setting .btn { min-width: 220px; }
+#hangarList { --cw: min(284px, 72vw); gap: 14px; }
+#hangarList[data-tab=skins] { height: 240px; }
+#hangarList[data-tab=upgrades] { height: 310px; }
+#hangarList[data-tab] .card { padding: 40px 36px 36px; justify-content: space-between; gap: 10px; background: none !important; }
+#hangarList[data-tab] .card .name { font-size: 24px; line-height: 1.1; }
+#hangarList[data-tab] .card .btn { width: 100%; height: 58px; min-height: 58px; padding: 0 10px; margin: 0; }
+#hangarList[data-tab] .card .tag { min-width: 128px; height: 46px; padding: 0 30px; }
+.card .desc { padding: 0; font-size: 13.5px; line-height: 1.3; }
+.card .tiers { gap: 8px; }
+/* upgrades: the big badge hovers where the ship is in the skins tab */
+#hangar .hangarMid { align-items: center; }
+#previewIcon { display: none; width: min(44vw, 180px); height: auto; filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.55)); animation: iconBob 3.2s ease-in-out infinite; }
+#hangar[data-tab=upgrades] #previewIcon { display: block; }
+@keyframes iconBob { 0%, 100% { transform: translateY(-5px); } 50% { transform: translateY(6px); } }
+@media (max-height: 720px) { #hangarList[data-tab=skins] { height: 214px; } #hangarList[data-tab=upgrades] { height: 270px; } #hangarList[data-tab] .card { padding: 34px 32px 30px; } #previewIcon { width: 120px; } }
+
+/* text: balanced lines, no single-word last line */
+.card .desc, .note, .sub, p { text-wrap: balance; }
+
+/* shop: the badge fits the free band between coins and cards, whatever the screen height */
+#hangar .hangarMid { position: relative; min-height: 0; }
+#previewIcon { position: absolute; left: 50%; top: 50%; height: min(78%, 180px); width: auto; aspect-ratio: 1; animation: iconBob2 3.2s ease-in-out infinite; }
+@keyframes iconBob2 { 0%, 100% { transform: translate(-50%, calc(-50% - 5px)); } 50% { transform: translate(-50%, calc(-50% + 5px)); } }
 </style>
 </head>
 <body>
@@ -182,11 +322,10 @@
 <!-- Main menu: hangar scene is drawn on the canvas; tapping anywhere that is not a button launches -->
 <div id="menu" class="screen scene">
   <div class="top">
-    <h1>SPACE JUNK<br>RUNNER</h1>
-    <p class="sub">Tilt to steer · auto-fire · collect junk</p>
+    <img class="logo" alt="Space Junk Runner" src="art/ui_logo.png">
     <div class="record">Best distance: <b id="menuBest">0 m</b> · Junk: <b id="menuJunk">0</b></div>
   </div>
-  <div class="hint">TAP TO START YOUR JOURNEY</div>
+  <div class="hint">TAP TO START<br>YOUR JOURNEY</div>
   <div class="bottom">
     <button class="btn secondary" id="btnHangar">HANGAR</button>
     <button class="btn secondary" id="btnSettings">SETTINGS</button>
@@ -231,12 +370,10 @@
       <button class="btn active" id="tabSkins">SKINS</button>
       <button class="btn" id="tabUpgrades">UPGRADES</button>
     </div>
-    <p class="sub">Junk: <b id="hangarJunk">0</b></p>
+    <p class="sub"><img id="hangarJunkIcon" alt="" style="width:22px;height:22px;vertical-align:-5px"> <b id="hangarJunk">0</b></p>
   </div>
-  <div class="hangarBody">
-    <div class="spacer"></div>
-    <div id="hangarList"></div>
-  </div>
+  <div class="hangarMid"><div id="previewName"></div><img id="previewIcon" alt=""></div>
+  <div id="hangarList"></div>
   <button class="btn secondary" id="btnHangarBack">BACK</button>
 </div>
 
@@ -248,7 +385,7 @@
     <input type="range" id="sensSlider" min="0.5" max="2" step="0.1" value="1">
   </div>
   <div class="setting">
-    <label>Sound <span id="muteVal">On</span></label>
+    <label style="display:none">Sound <span id="muteVal">On</span></label>
     <button class="btn secondary small" id="btnMute">MUTE</button>
   </div>
   <p class="note" id="steerInfo"></p>
@@ -308,7 +445,7 @@ const CONFIG = {
     spinMax: 0.9,                 // rad/s (random, either direction)
     hitbox: 0.8,
     sizeWeights: [0.43, 0.34, 0.18, 0.05],   // spawn probability per size (huge ≈ 1 in 20)
-    keys: ['asteroid.small', 'asteroid.medium', 'asteroid.large', 'asteroid.huge'],
+    keys: [['asteroid.small', 'asteroid.small2', 'asteroid.small3', 'asteroid.small4', 'asteroid.small5'], ['asteroid.medium', 'asteroid.medium2', 'asteroid.medium3', 'asteroid.medium4', 'asteroid.medium5'], ['asteroid.large', 'asteroid.large2', 'asteroid.large3', 'asteroid.large4'], ['asteroid.huge', 'asteroid.huge2']],   // a size may list several variants; one is picked at random
   },
   enemy: {
     hp: 3,
@@ -380,9 +517,10 @@ const CONFIG = {
     menuScroll: 0.04,             // sh/s background drift behind the hangar
   },
   menu: {
-    shipX: 0.5, shipY: 0.57,          // ship position on the main menu (fractions of W / H)
-    hangarShipX: 0.22, hangarShipY: 0.55, // ship position on the hangar (shop) screen
-    shipScale: 1.6,                   // ship is drawn larger in the hangar
+    shipX: 0.5, shipY: 0.55,          // ship position on the main menu (fractions of W / H)
+    hangarShipX: 0.5, hangarShipY: 0.40, hangarShipYUp: 0.26, hangarShipScale: 3.9, // ship position on the hangar (shop) screen
+    hangarDim: 0.4,                   // black veil over the hangar picture, 0..1 (ship, logo, texts and buttons sit above it)
+    shipScale: 4.0,                   // ship is drawn larger in the hangar
     launchDuration: 1.15,             // seconds for hangar to slide away and ship to reach flight position
     dockRate: 7,                      // how fast the hangar slides back in on the menu (1/s)
   },
@@ -740,7 +878,7 @@ function drawBullet(ctx, s, t, extra) {
 function makeStarLayer(cfg) {
   const rnd = seededRandom(cfg.seed);
   const stars = [];
-  for (let i = 0; i < cfg.count; i++) stars.push({ x: rnd(), y: rnd(), s: cfg.size[0] + rnd() * (cfg.size[1] - cfg.size[0]), tw: rnd() * TAU, a: 0.5 + rnd() * 0.5 });
+  for (let i = 0; i < cfg.count; i++) stars.push({ x: rnd(), y: rnd(), s: cfg.size[0] + rnd() * (cfg.size[1] - cfg.size[0]), tw: rnd() * TAU, a: 0.5 + rnd() * 0.5, k: rnd(), g: Math.floor(rnd() * 3) });
   const blobs = [];
   if (cfg.nebula) for (let i = 0; i < 4; i++) blobs.push({ x: rnd(), y: rnd(), r: 0.25 + rnd() * 0.3, hueOff: -40 + rnd() * 100 });
   return function (ctx, W, H, scroll, t, extra) {
@@ -749,26 +887,34 @@ function makeStarLayer(cfg) {
       // sector wash: tints all of space with the sector hue (invisible in the default sector)
       if (th.wash > 0.01) {
         const g = ctx.createLinearGradient(0, 0, 0, H);
-        g.addColorStop(0, `hsla(${th.hue},70%,16%,${(th.wash * 0.85).toFixed(3)})`);
-        g.addColorStop(1, `hsla(${th.hue + 30},60%,9%,${(th.wash * 0.6).toFixed(3)})`);
+        g.addColorStop(0, `hsla(${th.hue},70%,16%,${(th.wash * 0.55).toFixed(3)})`);
+        g.addColorStop(1, `hsla(${th.hue + 30},60%,9%,${(th.wash * 0.38).toFixed(3)})`);
         ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
       }
       for (const b of blobs) {
         const y = ((b.y * H + scroll) % H + H) % H;
         for (const yy of [y, y - H]) {
           const g = ctx.createRadialGradient(b.x * W, yy, 0, b.x * W, yy, b.r * W);
-          g.addColorStop(0, `hsla(${th.hue + b.hueOff},80%,60%,${(0.10 + th.wash * 0.1).toFixed(3)})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+          g.addColorStop(0, `hsla(${th.hue + b.hueOff},80%,60%,${(0.07 + th.wash * 0.06).toFixed(3)})`); g.addColorStop(1, 'rgba(0,0,0,0)');
           ctx.fillStyle = g; ctx.fillRect(b.x * W - b.r * W, yy - b.r * W, b.r * W * 2, b.r * W * 2);
         }
       }
     }
     ctx.fillStyle = th.wash > 0.01 ? `hsl(${th.hue},${Math.round(th.wash * 55)}%,90%)` : cfg.color;
+    const base = ctx.fillStyle, GIANTS = ['#ffd9a0', '#a8e6ff', '#ffb3c1'];
     for (const st of stars) {
       const y = ((st.y * H + scroll) % H + H) % H;
       const a = cfg.alpha * st.a * (0.75 + 0.25 * Math.sin(t * 2 + st.tw));
       ctx.globalAlpha = a;
       const sz = st.s * (W / 400);
-      ctx.fillRect(st.x * W - sz / 2, y - sz / 2, sz, sz);
+      const x = st.x * W;
+      if (st.k < cfg.sparkle) {            // four-point sparkle
+        const L = sz * 3.4;
+        ctx.fillRect(x - L / 2, y - sz * 0.22, L, sz * 0.44); ctx.fillRect(x - sz * 0.22, y - L / 2, sz * 0.44, L); ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz);
+      } else if (cfg.giants && st.k > 0.965) {   // rare coloured giant with a soft halo
+        ctx.fillStyle = GIANTS[st.g]; ctx.globalAlpha = a * 0.35; ctx.beginPath(); ctx.arc(x, y, sz * 1.7, 0, TAU); ctx.fill();
+        ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(x, y, sz * 0.85, 0, TAU); ctx.fill(); ctx.fillStyle = base;
+      } else ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz);
     }
     ctx.globalAlpha = 1;
   };
@@ -841,37 +987,236 @@ function drawHangar(ctx, W, H, offset, t, extra) {
 
 const rainbow = t => `hsl(${(t * 120) % 360},100%,60%)`;
 
+/* ART — sprite files live in ./art, named by key (ship.scout -> art/ship_scout.png) */
+const ART = {
+  'ship.scout': 'art/ship_scout.png',
+  'ship.ember': 'art/ship_ember.png',
+  'ship.viridian': 'art/ship_viridian.png',
+  'ship.phantom': 'art/ship_phantom.png',
+  'ship.aurum': 'art/ship_aurum.png',
+  'ship.nova': 'art/ship_nova.png',
+  'enemy': 'art/enemy.png',
+  'junk': 'art/junk.png',
+  'junk.rare': 'art/junk_rare.png',
+  'pickup.shield': 'art/pickup_shield.png',
+  'pickup.magnet': 'art/pickup_magnet.png',
+  'pickup.rocket': 'art/pickup_rocket.png',
+  'asteroid.huge': 'art/asteroid_huge.png',
+  'asteroid.huge2': 'art/asteroid_huge2.png',
+  'asteroid.large': 'art/asteroid_large.png',
+  'asteroid.large2': 'art/asteroid_large2.png',
+  'asteroid.large3': 'art/asteroid_large3.png',
+  'asteroid.large4': 'art/asteroid_large4.png',
+  'asteroid.medium': 'art/asteroid_medium.png',
+  'asteroid.medium2': 'art/asteroid_medium2.png',
+  'asteroid.medium3': 'art/asteroid_medium3.png',
+  'asteroid.medium4': 'art/asteroid_medium4.png',
+  'asteroid.medium5': 'art/asteroid_medium5.png',
+  'asteroid.small': 'art/asteroid_small.png',
+  'asteroid.small2': 'art/asteroid_small2.png',
+  'asteroid.small3': 'art/asteroid_small3.png',
+  'asteroid.small4': 'art/asteroid_small4.png',
+  'asteroid.small5': 'art/asteroid_small5.png',
+  'hangar': 'art/hangar.jpg'
+};
+/* ICONS — small badges for the shop list and HUD (replace the text glyphs) */
+const ICONS = {
+  lives: 'art/icon_lives.png',
+  damage: 'art/icon_damage.png',
+  rareJunk: 'art/icon_rareJunk.png',
+  heart: 'art/ui_heart.png',
+  heartLost: 'art/ui_heart_lost.png',
+  dotOn: 'art/ui_dot_on.png',
+  dotOff: 'art/ui_dot_off.png',
+  shield: 'art/icon_shield.png',
+  magnet: 'art/icon_magnet.png',
+  rocket: 'art/icon_rocket.png',
+  junk: 'art/icon_junk.png'
+};
+
+const ART3 = {
+  'asteroid.ice.small': 'art/asteroid_ice_small.png',
+  'asteroid.ice.medium': 'art/asteroid_ice_medium.png',
+  'asteroid.ice.large': 'art/asteroid_ice_large.png',
+  'asteroid.ice.huge': 'art/asteroid_ice_huge.png',
+  'asteroid.lava.small': 'art/asteroid_lava_small.png',
+  'asteroid.lava.medium': 'art/asteroid_lava_medium.png',
+  'asteroid.lava.large': 'art/asteroid_lava_large.png',
+  'asteroid.lava.huge': 'art/asteroid_lava_huge.png',
+  'asteroid.void.small': 'art/asteroid_void_small.png',
+  'asteroid.void.medium': 'art/asteroid_void_medium.png',
+  'asteroid.void.large': 'art/asteroid_void_large.png',
+  'asteroid.void.huge': 'art/asteroid_void_huge.png',
+  'asteroid.crystal.small': 'art/asteroid_crystal_small.png',
+  'asteroid.crystal.medium': 'art/asteroid_crystal_medium.png',
+  'asteroid.crystal.large': 'art/asteroid_crystal_large.png',
+  'asteroid.crystal.huge': 'art/asteroid_crystal_huge.png',
+  'debris.1': 'art/debris_1.png',
+  'debris.2': 'art/debris_2.png',
+  'debris.3': 'art/debris_3.png',
+  'debris.4': 'art/debris_4.png',
+  'debris.5': 'art/debris_5.png',
+  'debris.6': 'art/debris_6.png',
+  'debris.7': 'art/debris_7.png',
+  'debris.8': 'art/debris_8.png',
+  'planet.ocean': 'art/planet_ocean.png',
+  'planet.violet': 'art/planet_violet.png',
+  'planet.desert': 'art/planet_desert.png',
+  'planet.stripe': 'art/planet_stripe.png',
+  'planet.ringed': 'art/planet_ringed.png',
+  'planet.moon': 'art/planet_moon.png',
+  'planet.ice': 'art/planet_ice.png',
+  'planet.lava': 'art/planet_lava.png'
+};
 const ASSETS = {
   // ---- ships ----
-  'ship.scout':    { type: 'procedural', draw: makeShipDrawer({ hull: '#ffffff', hull2: '#c9d6ea', wing: '#aebfd8', line: '#dfe9ff', cockpit: '#2d7dff', glow: '#4aa8ff' }) },
-  'ship.ember':    { type: 'procedural', draw: makeShipDrawer({ hull: '#ff7a3d', hull2: '#c6301a', wing: '#8f1d12', line: '#ffb38a', cockpit: '#ffe08a', glow: '#ff5a1f' }) },
-  'ship.viridian': { type: 'procedural', draw: makeShipDrawer({ hull: '#4dff88', hull2: '#1c9a4a', wing: '#146634', line: '#b8ff3c', cockpit: '#eaffb0', glow: '#8cff3c' }) },
-  'ship.phantom':  { type: 'procedural', draw: makeShipDrawer({ hull: '#4b2a8a', hull2: '#241247', wing: '#1a0d36', line: '#b07cff', cockpit: '#e6ccff', glow: '#9b4dff' }) },
-  'ship.aurum':    { type: 'procedural', draw: makeShipDrawer({ hull: '#ffd84f', hull2: '#c7930f', wing: '#8a6208', line: '#fff1b0', cockpit: '#fff8dc', glow: '#ffb300' }) },
-  'ship.nova':     { type: 'procedural', draw: makeShipDrawer({ hull: '#f2f5fa', hull2: '#9aa5b8', wing: '#6e7a90', line: '#ffffff', cockpit: '#1a1f2e', glow: rainbow }) },
+  'ship.scout': { type: 'image', src: ART['ship.scout'], anchor: { x: 0.5, y: 0.5 } },
+  'ship.ember': { type: 'image', src: ART['ship.ember'], anchor: { x: 0.5, y: 0.5 } },
+  'ship.viridian': { type: 'image', src: ART['ship.viridian'], anchor: { x: 0.5, y: 0.5 } },
+  'ship.phantom': { type: 'image', src: ART['ship.phantom'], anchor: { x: 0.5, y: 0.5 } },
+  'ship.aurum': { type: 'image', src: ART['ship.aurum'], anchor: { x: 0.5, y: 0.5 } },
+  'ship.nova': { type: 'image', src: ART['ship.nova'], anchor: { x: 0.5, y: 0.5 } },
   // ---- obstacles / pickups / projectiles ----
-  'asteroid.small':  { type: 'procedural', draw: makeAsteroidDrawer(11) },
-  'asteroid.medium': { type: 'procedural', draw: makeAsteroidDrawer(23) },
-  'asteroid.large':  { type: 'procedural', draw: makeAsteroidDrawer(47) },
-  'asteroid.huge':   { type: 'procedural', draw: makeAsteroidDrawer(83) },
-  'enemy':  { type: 'procedural', draw: drawEnemy },
-  'junk':   { type: 'procedural', draw: drawJunk },
+  'asteroid.huge': { type: 'image', src: ART['asteroid.huge'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.huge2': { type: 'image', src: ART['asteroid.huge2'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.large': { type: 'image', src: ART['asteroid.large'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.large2': { type: 'image', src: ART['asteroid.large2'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.large3': { type: 'image', src: ART['asteroid.large3'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.large4': { type: 'image', src: ART['asteroid.large4'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.medium': { type: 'image', src: ART['asteroid.medium'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.medium2': { type: 'image', src: ART['asteroid.medium2'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.medium3': { type: 'image', src: ART['asteroid.medium3'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.medium4': { type: 'image', src: ART['asteroid.medium4'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.medium5': { type: 'image', src: ART['asteroid.medium5'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.small': { type: 'image', src: ART['asteroid.small'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.small2': { type: 'image', src: ART['asteroid.small2'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.small3': { type: 'image', src: ART['asteroid.small3'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.small4': { type: 'image', src: ART['asteroid.small4'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.small5': { type: 'image', src: ART['asteroid.small5'], anchor: { x: 0.5, y: 0.5 }, sectorTint: true },
+  'asteroid.ice.small': { type: 'image', src: ART3['asteroid.ice.small'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.ice.medium': { type: 'image', src: ART3['asteroid.ice.medium'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.ice.large': { type: 'image', src: ART3['asteroid.ice.large'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.ice.huge': { type: 'image', src: ART3['asteroid.ice.huge'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.lava.small': { type: 'image', src: ART3['asteroid.lava.small'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.lava.medium': { type: 'image', src: ART3['asteroid.lava.medium'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.lava.large': { type: 'image', src: ART3['asteroid.lava.large'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.lava.huge': { type: 'image', src: ART3['asteroid.lava.huge'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.void.small': { type: 'image', src: ART3['asteroid.void.small'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.void.medium': { type: 'image', src: ART3['asteroid.void.medium'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.void.large': { type: 'image', src: ART3['asteroid.void.large'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.void.huge': { type: 'image', src: ART3['asteroid.void.huge'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.crystal.small': { type: 'image', src: ART3['asteroid.crystal.small'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.crystal.medium': { type: 'image', src: ART3['asteroid.crystal.medium'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.crystal.large': { type: 'image', src: ART3['asteroid.crystal.large'], anchor: { x: 0.5, y: 0.5 } },
+  'asteroid.crystal.huge': { type: 'image', src: ART3['asteroid.crystal.huge'], anchor: { x: 0.5, y: 0.5 } },
+  'debris.1': { type: 'image', src: ART3['debris.1'], anchor: { x: 0.5, y: 0.5 } },
+  'debris.2': { type: 'image', src: ART3['debris.2'], anchor: { x: 0.5, y: 0.5 } },
+  'debris.3': { type: 'image', src: ART3['debris.3'], anchor: { x: 0.5, y: 0.5 } },
+  'debris.4': { type: 'image', src: ART3['debris.4'], anchor: { x: 0.5, y: 0.5 } },
+  'debris.5': { type: 'image', src: ART3['debris.5'], anchor: { x: 0.5, y: 0.5 } },
+  'debris.6': { type: 'image', src: ART3['debris.6'], anchor: { x: 0.5, y: 0.5 } },
+  'debris.7': { type: 'image', src: ART3['debris.7'], anchor: { x: 0.5, y: 0.5 } },
+  'debris.8': { type: 'image', src: ART3['debris.8'], anchor: { x: 0.5, y: 0.5 } },
+  'planet.ocean': { type: 'image', src: ART3['planet.ocean'], anchor: { x: 0.5, y: 0.5 } },
+  'planet.violet': { type: 'image', src: ART3['planet.violet'], anchor: { x: 0.5, y: 0.5 } },
+  'planet.desert': { type: 'image', src: ART3['planet.desert'], anchor: { x: 0.5, y: 0.5 } },
+  'planet.stripe': { type: 'image', src: ART3['planet.stripe'], anchor: { x: 0.5, y: 0.5 } },
+  'planet.ringed': { type: 'image', src: ART3['planet.ringed'], anchor: { x: 0.5, y: 0.5 } },
+  'planet.moon': { type: 'image', src: ART3['planet.moon'], anchor: { x: 0.5, y: 0.5 } },
+  'planet.ice': { type: 'image', src: ART3['planet.ice'], anchor: { x: 0.5, y: 0.5 } },
+  'planet.lava': { type: 'image', src: ART3['planet.lava'], anchor: { x: 0.5, y: 0.5 } },
+  'enemy': { type: 'image', src: ART['enemy'], anchor: { x: 0.5, y: 0.5 } },
+  'junk': { type: 'image', src: ART['junk'], anchor: { x: 0.5, y: 0.5 } },
   'bullet': { type: 'procedural', draw: drawBullet },
-  'pickup.shield': { type: 'procedural', draw: drawShieldPickup },
-  'pickup.magnet': { type: 'procedural', draw: drawMagnetPickup },
-  'pickup.rocket': { type: 'procedural', draw: drawRocketPickup },
+  'pickup.shield': { type: 'image', src: ART['pickup.shield'], anchor: { x: 0.5, y: 0.5 } },
+  'pickup.magnet': { type: 'image', src: ART['pickup.magnet'], anchor: { x: 0.5, y: 0.5 } },
+  'pickup.rocket': { type: 'image', src: ART['pickup.rocket'], anchor: { x: 0.5, y: 0.5 } },
   'magnet.field':  { type: 'procedural', draw: drawMagnetField },
   'rocket':        { type: 'procedural', draw: (ctx, s, t) => drawRocketShape(ctx, s, t) },
-  'junk.rare':     { type: 'procedural', draw: drawRareJunk },
+  'junk.rare': { type: 'image', src: ART['junk.rare'], anchor: { x: 0.5, y: 0.5 } },
   'shield.aura':   { type: 'procedural', draw: drawShieldAura },
   // ---- scenes: background (3 parallax layers) and the hangar ----
-  'background.far':  { type: 'procedural', draw: makeStarLayer({ count: 90, size: [1, 1.6], alpha: 0.55, seed: 101, nebula: true, color: '#cfd8ff' }) },
-  'background.mid':  { type: 'procedural', draw: makeStarLayer({ count: 55, size: [1.6, 2.4], alpha: 0.8, seed: 202, nebula: false, color: '#e8efff' }) },
-  'background.near': { type: 'procedural', draw: makeStarLayer({ count: 25, size: [2.4, 3.6], alpha: 1.0, seed: 303, nebula: false, color: '#ffffff' }) },
-  'hangar': { type: 'procedural', draw: drawHangar },
+  'background.far':  { type: 'procedural', draw: makeStarLayer({ count: 90, size: [1, 1.6], alpha: 0.55, seed: 101, sparkle: 0, giants: false, nebula: true, color: '#cfd8ff' }) },
+  'background.mid':  { type: 'procedural', draw: makeStarLayer({ count: 55, size: [1.6, 2.4], alpha: 0.8, seed: 202, sparkle: 0.1, giants: true, nebula: false, color: '#e8efff' }) },
+  'background.near': { type: 'procedural', draw: makeStarLayer({ count: 25, size: [2.4, 3.6], alpha: 1.0, seed: 303, sparkle: 0.28, giants: true, nebula: false, color: '#ffffff' }) },
+  'hangar': { type: 'image', src: ART['hangar'] },
   // ---- example of an image entry (artwork replacement) ----
   // 'junk': { type: 'image', src: 'art/junk.png', frames: 6, frameSize: { w: 32, h: 32 }, anchor: { x: 0.5, y: 0.5 }, fps: 10 },
   // 'hangar': { type: 'image', src: 'art/hangar.png' },   // scaled to screen width, slides with the menu
+};
+
+/* ====================================================================
+   PLATES — painted plates drawn as a proper 9-slice on a canvas that sits behind the element.
+   Corners (with their rivets) keep their shape at any size; only the straight edges and the centre stretch.
+   Drawn at exact device pixels, so there are no seams or blur at fractional pixel ratios.
+   ==================================================================== */
+const PLATE_ART = {
+  btnP: 'art/ui_btn_primary.png', btnS: 'art/ui_btn_secondary.png', btnD: 'art/ui_btn_danger.png', btnX: 'art/ui_btn_disabled.png', card: 'art/ui_card.png', cardG: 'art/ui_card_gold.png', tag: 'art/ui_tag.png', panel: 'art/ui_panel.png',
+};
+/** Keeps a number together with its unit ("4 s") and never leaves a single word alone on the last line. */
+function noWidow(s) { return String(s).replace(/ → /g, '\u00A0→ ').replace(/(\d) (\S)/g, '$1\u00A0$2').replace(/ ([^ ]+)$/, '\u00A0$1'); }
+const Plates = {
+  // src image, corner size in source px (sx, sy), s = css px per source px (the same for both axes, so corners are never squashed)
+  SPEC: {
+    'btn-primary':   { src: 'btnP',  sx: 75, sy: 75, s: 0.26 },
+    'btn-secondary': { src: 'btnS',  sx: 75, sy: 75, s: 0.26 },
+    'btn-danger':    { src: 'btnD',  sx: 75, sy: 75, s: 0.26 },
+    'btn-disabled':  { src: 'btnX',  sx: 75, sy: 75, s: 0.26 },
+    'card':          { src: 'card',  sx: 72, sy: 72, s: 0.36 },
+    'card-gold':     { src: 'cardG', sx: 72, sy: 72, s: 0.36 },
+    'tag':           { src: 'tag',   sx: 62, sy: 70, fitH: true },   // scaled to the element height, only the middle stretches sideways
+    'panel':         { src: 'panel', sx: 80, sy: 80, s: 0.30 },
+  },
+  SEL: '.btn:not(#pauseBtn), .card, .tag, .setting',
+  imgs: {},
+  specFor(el) {
+    if (el.matches('.tag')) return this.SPEC.tag;
+    if (el.matches('.card')) return el.classList.contains('selected') ? this.SPEC['card-gold'] : this.SPEC.card;
+    if (el.matches('.setting')) return this.SPEC.panel;
+    if (el.disabled) return this.SPEC['btn-disabled'];
+    if (el.matches('.tabs .btn')) return el.classList.contains('active') ? this.SPEC['btn-primary'] : this.SPEC['btn-secondary'];
+    if (el.classList.contains('danger')) return this.SPEC['btn-danger'];
+    if (el.classList.contains('secondary') && !el.closest('.setting')) return this.SPEC['btn-secondary'];
+    return this.SPEC['btn-primary'];
+  },
+  paint(el) {
+    const sp = this.specFor(el), img = sp && this.imgs[sp.src];
+    if (!img) return;
+    const cssW = el.offsetWidth, cssH = el.offsetHeight;
+    if (cssW < 8 || cssH < 8) return;                      // hidden screen: painted when it is shown (ResizeObserver)
+    const dpr = Math.min(3, window.devicePixelRatio || 1), w = Math.round(cssW * dpr), h = Math.round(cssH * dpr);
+    let cv = el._plate;
+    if (!cv) { cv = el._plate = document.createElement('canvas'); cv.className = 'plate'; }
+    if (!cv.isConnected) el.insertBefore(cv, el.firstChild);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    const g = cv.getContext('2d'); g.clearRect(0, 0, w, h); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    const iw = img.width, ih = img.height, sx = sp.sx, sy = sp.sy, sc = sp.fitH ? cssH / ih : sp.s;
+    const bx = Math.min(Math.round(sx * sc * dpr), (w >> 1) - 1), by = Math.min(Math.round(sy * sc * dpr), h >> 1);
+    // centre first, a pixel larger on every side so no hairline can show between the parts
+    g.drawImage(img, sx, sy, iw - 2 * sx, ih - 2 * sy, bx - 1, by - 1, w - 2 * bx + 2, h - 2 * by + 2);
+    g.drawImage(img, sx, 0, iw - 2 * sx, sy, bx - 1, 0, w - 2 * bx + 2, by);
+    g.drawImage(img, sx, ih - sy, iw - 2 * sx, sy, bx - 1, h - by, w - 2 * bx + 2, by);
+    g.drawImage(img, 0, sy, sx, ih - 2 * sy, 0, by - 1, bx, h - 2 * by + 2);
+    g.drawImage(img, iw - sx, sy, sx, ih - 2 * sy, w - bx, by - 1, bx, h - 2 * by + 2);
+    g.drawImage(img, 0, 0, sx, sy, 0, 0, bx, by);
+    g.drawImage(img, iw - sx, 0, sx, sy, w - bx, 0, bx, by);
+    g.drawImage(img, 0, ih - sy, sx, sy, 0, h - by, bx, by);
+    g.drawImage(img, iw - sx, ih - sy, sx, sy, w - bx, h - by, bx, by);
+  },
+  async init() {
+    await Promise.all(Object.keys(PLATE_ART).map(k => new Promise(res => { const im = new Image(); im.onload = () => { this.imgs[k] = im; res(); }; im.onerror = res; im.src = PLATE_ART[k]; })));
+    const ro = new ResizeObserver(es => es.forEach(e => this.paint(e.target)));
+    const attach = el => { if (!el._pl) { el._pl = true; ro.observe(el); } this.paint(el); };
+    document.querySelectorAll(this.SEL).forEach(attach);
+    new MutationObserver(ms => {
+      for (const m of ms) {
+        if (m.type === 'childList') {
+          m.addedNodes.forEach(n => { if (n.nodeType === 1) { if (n.matches(this.SEL)) attach(n); n.querySelectorAll(this.SEL).forEach(attach); } });
+          if (m.target.matches && m.target.matches(this.SEL) && m.target._plate && !m.target._plate.isConnected) this.paint(m.target);   // textContent wiped the canvas
+        } else if (m.target.matches && m.target.matches(this.SEL)) this.paint(m.target);
+      }
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'disabled'] });
+  },
 };
 
 const Assets = {
@@ -910,10 +1255,47 @@ const Assets = {
         const sx = (frame % perRow) * fw, sy = Math.floor(frame / perRow) * fh;
         const dh = w * fh / fw;
         const ax = e.anchor ? e.anchor.x : 0.5, ay = e.anchor ? e.anchor.y : 0.5;
-        ctx.drawImage(img, sx, sy, fw, fh, -w * ax, -dh * ay, w, dh);
+        ctx.imageSmoothingQuality = 'high';
+        const fx = extra || {};
+        const tint = e.sectorTint && fx.theme && fx.theme.sat > 0.15 ? fx.theme : null;   // default sector keeps the natural colours
+        if (tint || fx.flash > 0) {
+          const sc = this._scratch(img, sx, sy, fw, fh, w, tint, fx.flash);
+          ctx.drawImage(sc, -w * ax, -dh * ay, w, dh);
+        } else {
+          ctx.drawImage(img, sx, sy, fw, fh, -w * ax, -dh * ay, w, dh);
+        }
       }
     }
     ctx.restore();
+  },
+  /** Integration-time tinting for image sprites (done in code, as the asset list promises):
+   *  sectorTint — shifts a sprite towards the current sector hue; flash — white hit flash. */
+  _sc: null,
+  _scratch(img, sx, sy, fw, fh, w, theme, flash) {
+    const k = Math.min(1, (w * 2) / fw);
+    const pw = Math.max(1, Math.round(fw * k)), ph = Math.max(1, Math.round(fh * k));
+    const c = this._sc || (this._sc = document.createElement('canvas'));
+    if (c.width !== pw || c.height !== ph) { c.width = pw; c.height = ph; }
+    const g = c.getContext('2d');
+    g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+    g.clearRect(0, 0, pw, ph);
+    g.drawImage(img, sx, sy, fw, fh, 0, 0, pw, ph);
+    if (theme) {
+      g.globalCompositeOperation = 'color';
+      g.globalAlpha = Math.min(1, Math.max(0, (theme.sat - 0.12) / 0.78)) * 0.5;
+      g.fillStyle = `hsl(${theme.hue},${Math.round(theme.sat * 60)}%,50%)`;
+      g.fillRect(0, 0, pw, ph);
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = 'destination-in';
+      g.drawImage(img, sx, sy, fw, fh, 0, 0, pw, ph);
+    }
+    if (flash > 0) {
+      g.globalCompositeOperation = 'source-atop'; g.globalAlpha = Math.min(1, flash);
+      g.fillStyle = '#fff'; g.fillRect(0, 0, pw, ph);
+      g.globalAlpha = 1;
+    }
+    g.globalCompositeOperation = 'source-over';
+    return c;
   },
   /** Draw a full-screen background layer with a vertical scroll offset (px); images tile vertically. */
   drawBackground(ctx, key, W, H, scroll, t, extra) {
@@ -932,7 +1314,10 @@ const Assets = {
     if (!e) return;
     if (e.type === 'procedural') { e.draw(ctx, W, H, offset, t, extra); return; }
     const img = this.images[key];
-    if (img) ctx.drawImage(img, 0, offset, W, W * img.height / img.width);
+    if (img) {   // cover-fit: fills the screen on any phone height, centred horizontally
+      const s = Math.max(W / img.width, H / img.height), dw = img.width * s, dh = img.height * s;
+      ctx.drawImage(img, (W - dw) / 2, offset, dw, dh);
+    }
   },
 };
 
@@ -1329,6 +1714,13 @@ function hasFreeLane(intervals, laneW) {
   return W - cursor >= laneW;
 }
 
+/** Each sector colour has its own kind of rock; the stone set (with variants) is the default. */
+const SECTOR_ROCKS = { default: 'stone', amber: 'stone', crimson: 'lava', ice: 'ice', violet: 'void', emerald: 'crystal', toxic: 'crystal', rust: 'stone' };
+function pickRock(idx) {
+  const set = SECTOR_ROCKS[(Theme.to && Theme.to.id) || 'default'] || 'stone';
+  const v = set === 'stone' ? CONFIG.asteroid.keys[idx] : 'asteroid.' + set + '.' + ['small', 'medium', 'large', 'huge'][idx];
+  return Array.isArray(v) ? v[Math.floor(Math.random() * v.length)] : v;
+}
 function spawnAsteroid() {
   const c = CONFIG.asteroid, sp = CONFIG.spawn;
   // pick size by weight
@@ -1345,7 +1737,7 @@ function spawnAsteroid() {
     // avoid overlapping another asteroid at spawn height
     if (band.some(a => a.y < w && Math.hypot(a.x - x, a.y - (-w)) < (a.w + w) * 0.55)) continue;
     G.asteroids.push({
-      x, y: -w, w, key: c.keys[idx],
+      x, y: -w, w, key: pickRock(idx),
       rot: rand(0, TAU), spin: rand(-c.spinMax, c.spinMax), extra: rand(c.extraSpeed[0], c.extraSpeed[1]) * H,
     });
     return true;
@@ -1541,7 +1933,12 @@ function update(dt) {
     // ---- steering ----
     Input.update(dt);
     const range = W / 2 - sh.w / 2;
-    if (Input.mode === 'tilt') sh.x = W / 2 + Input.axis * range;
+    if (Input.mode === 'tilt') {
+      const dragged = Input.consumeTouchDelta() * CONFIG.ship.touchGain;
+      Input.tiltBias = clamp((Input.tiltBias || 0) + dragged, -W, W);
+      if (!Input._dragging) Input.tiltBias *= Math.exp(-dt * 0.8);
+      sh.x = W / 2 + Input.axis * range + Input.tiltBias;
+    }
     else sh.x += Input.consumeTouchDelta() * CONFIG.ship.touchGain + Input.keyAxis * CONFIG.ship.keySpeed * W * dt;
     sh.x = clamp(sh.x, sh.w / 2, W - sh.w / 2);
     // ---- auto-fire ----
@@ -1712,8 +2109,9 @@ function updateMenuScene(dt) {
   G.bgScroll += CONFIG.world.menuScroll * H * dt;
   const k = 1 - Math.exp(-dt * CONFIG.menu.dockRate);
   G.hangarY += (0 - G.hangarY) * k;
-  const tx = (G.state === 'hangar' ? CONFIG.menu.hangarShipX : CONFIG.menu.shipX) * W;
-  const ty = (G.state === 'hangar' ? CONFIG.menu.hangarShipY : CONFIG.menu.shipY) * H;
+  const shopA = G.state === 'hangar' ? UI.shopArea() : null;
+  const tx = shopA ? shopA.cx : (G.state === 'hangar' ? CONFIG.menu.hangarShipX : CONFIG.menu.shipX) * W;
+  const ty = shopA ? shopA.cy : (G.state === 'hangar' ? (UI.hangarTab === 'skins' ? CONFIG.menu.hangarShipY : CONFIG.menu.hangarShipYUp) : CONFIG.menu.shipY) * H;
   G.menuShip.x += (tx - G.menuShip.x) * k;
   G.menuShip.y += (ty - G.menuShip.y) * k;
 }
@@ -1722,6 +2120,123 @@ function updateMenuScene(dt) {
    RENDER
    ==================================================================== */
 let renderTime = 0;
+
+/* ====================================================================
+   SPACE DECOR — planets (far layer), debris (mid layer) and comets.
+   Art comes from the manifest ('planet.*', 'debris.N'); movement is code.
+   ==================================================================== */
+const DECO = {
+  planetBySector: { default: 'planet.moon', amber: 'planet.ringed', crimson: 'planet.lava', ice: 'planet.ice', violet: 'planet.violet', emerald: 'planet.ocean', toxic: 'planet.stripe', rust: 'planet.desert' },
+  // depth layers: blur = softness (share of size kept), dim = darkening, speed = share of world scroll, size = width as a share of the screen
+  LAYERS: [
+    { blur: 0.16, dim: 0.72, alpha: 0.9,  speed: 0.42, size: [0.6, 0.9] },     // far: huge, soft, dark
+    { blur: 0.30, dim: 0.64, alpha: 0.92, speed: 0.55, size: [0.45, 0.65] },
+    { blur: 0.55, dim: 0.54, alpha: 0.95, speed: 0.72, size: [0.3, 0.46] },    // near: smaller, sharper
+  ],
+  DEBRIS_LAYER: [0, 1, 2, 1, 2, 0, 1, 2],
+  ready: false, cache: {}, planets: [], nextPlanet: 3, debris: [], extraK: 0, comets: [], nextComet: 6,
+  /** Darkened + softened copy of a sprite for a depth layer (shrink and scale back up: works in every browser, unlike ctx.filter). */
+  variant(key, layer, maxSize, extraDim) {
+    const id = key + '|' + layer; if (this.cache[id]) return this.cache[id];
+    const img = Assets.images[key]; if (!img) return null;
+    const L = this.LAYERS[layer], k = Math.min(1, maxSize / Math.max(img.width, img.height));
+    const iw = Math.max(2, Math.round(img.width * k)), ih = Math.max(2, Math.round(img.height * k));
+    const w = Math.round(iw * 1.5), h = Math.round(ih * 1.5);        // 25% empty margin on every side, so the blur has room
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(img, (w - iw) / 2, (h - ih) / 2, iw, ih);
+    g.globalCompositeOperation = 'source-atop'; g.fillStyle = `rgba(6,9,26,${Math.min(0.88, L.dim + extraDim)})`; g.fillRect(0, 0, w, h);
+    const sw = Math.max(4, Math.round(w * L.blur)), sh = Math.max(4, Math.round(h * L.blur));
+    const s = document.createElement('canvas'); s.width = sw; s.height = sh;
+    const sg = s.getContext('2d'); sg.imageSmoothingQuality = 'high'; sg.drawImage(c, 0, 0, sw, sh);
+    const o = document.createElement('canvas'); o.width = w; o.height = h;
+    const og = o.getContext('2d'); og.imageSmoothingQuality = 'high'; og.drawImage(s, 0, 0, w, h);
+    o.pad = 1.5; return (this.cache[id] = o);
+  },
+  init() {
+    const rnd = seededRandom(77), allP = Object.values(this.planetBySector);
+    this.allPlanets = allP.filter((k, i) => allP.indexOf(k) === i);
+    for (let i = 1; i <= 8; i++) {
+      if (!Assets.images['debris.' + i]) continue;
+      const layer = this.DEBRIS_LAYER[i - 1], s = [[0.14, 0.2], [0.18, 0.26], [0.22, 0.32]][layer];
+      this.debris.push({ key: 'debris.' + i, layer, x: 0.08 + rnd() * 0.84, y: rnd(), s: s[0] + rnd() * (s[1] - s[0]), rot: rnd() * TAU, spin: (rnd() - 0.5) * 0.4 });
+    }
+    this.ready = true;
+  },
+  spawnPlanet(W, scroll) {
+    let key = this.planetBySector[(Theme.to && Theme.to.id) || 'default'] || 'planet.moon';
+    if (Math.random() < 0.4 || this.planets.some(p => p.key === key)) {
+      const free = this.allPlanets.filter(k => !this.planets.some(p => p.key === k)); if (!free.length) return;
+      key = free[Math.floor(Math.random() * free.length)];
+    }
+    const layer = [0, 0, 1, 1, 2][Math.floor(Math.random() * 5)], L = this.LAYERS[layer];
+    const size = W * (L.size[0] + Math.random() * (L.size[1] - L.size[0]));
+    this.planets.push({ key, layer, size, x: W * (0.08 + Math.random() * 0.84), y0: -size * 0.6, s0: scroll });
+  },
+  drawPlanets(ctx, W, H, t, scroll, running) {
+    if (!this.ready) return;
+    if (running && t > this.nextPlanet && this.planets.length < 3) { this.spawnPlanet(W, scroll); this.nextPlanet = t + 4 + Math.random() * 5; }
+    this.planets.sort((a, b) => a.layer - b.layer);   // far ones first
+    for (let i = this.planets.length - 1; i >= 0; i--) {
+      const p = this.planets[i], L = this.LAYERS[p.layer], c = this.variant(p.key, p.layer, 512, 0);
+      if (!c) { this.planets.splice(i, 1); continue; }
+      const w = p.size * (c.width > c.height * 1.2 ? 1.25 : 1) * c.pad, h = w * c.height / c.width, y = p.y0 + (scroll - p.s0) * L.speed;
+      if (y - h / 2 > H) this.planets.splice(i, 1);
+    }
+    for (const p of this.planets) {
+      const L = this.LAYERS[p.layer], c = this.variant(p.key, p.layer, 512, 0); if (!c) continue;
+      const w = p.size * (c.width > c.height * 1.2 ? 1.25 : 1) * c.pad, h = w * c.height / c.width, y = p.y0 + (scroll - p.s0) * L.speed;
+      ctx.globalAlpha = L.alpha; ctx.drawImage(c, p.x - w / 2, y - h / 2, w, h);
+    }
+    ctx.globalAlpha = 1;
+  },
+  drawDebris(ctx, W, H, t, scroll, dt) {
+    if (!this.ready) return;
+    const rust = Theme.to && Theme.to.id === 'rust';   // the rust sector is thick with junk
+    this.extraK += ((rust ? 1 : 0) - this.extraK) * Math.min(1, dt * 0.8);
+    const span = H * 3.2;
+    for (let i = 0; i < this.debris.length; i++) {
+      const d = this.debris[i], fade = i < 5 ? 1 : this.extraK; if (fade < 0.02) continue;
+      const L = this.LAYERS[d.layer], c = this.variant(d.key, d.layer, 256, 0.06); if (!c) continue;
+      const sz = W * d.s, y = ((d.y * span + scroll * L.speed * 0.85) % span + span) % span - sz;
+      if (y > H + sz) continue;
+      const w = sz * (c.width >= c.height ? 1 : c.width / c.height) * c.pad, h = w * c.height / c.width;
+      ctx.save(); ctx.translate(d.x * W, y); ctx.rotate(d.rot + t * d.spin); ctx.globalAlpha = 0.85 * fade;
+      ctx.drawImage(c, -w / 2, -h / 2, w, h); ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  },
+  /** A comet is a bright head that moves; the tail is simply where the head has just been, fading and thinning behind it. */
+  drawComets(ctx, W, H, t, dt, running) {
+    if (running && t > this.nextComet) {
+      const sp = 0.85 + Math.random() * 0.4, ang = (0.5 + Math.random() * 0.25) * Math.PI * 0.5;   // heading down-left
+      this.comets.push({ x: W * (0.3 + Math.random() * 0.75), y: -12, vx: -Math.cos(ang) * H * sp, vy: Math.sin(ang) * H * sp * 1.1, age: 0, life: 0.9 + Math.random() * 0.5, alive: true, trail: [] });
+      this.nextComet = t + 6 + Math.random() * 10;
+    }
+    const th = (Theme.cur && Theme.cur.sat !== undefined) ? Theme.cur : DEFAULT_THEME, TAIL = 0.5, u = W / 400;
+    const rgb = th.wash > 0.01 ? `hsl(${th.hue},70%,86%)` : 'rgb(232,240,255)';
+    for (let i = this.comets.length - 1; i >= 0; i--) {
+      const c = this.comets[i];
+      if (c.alive) {
+        c.age += dt; c.x += c.vx * dt; c.y += c.vy * dt; c.trail.push({ x: c.x, y: c.y, t });
+        if (c.age > c.life || c.y > H + 30 || c.x < -30) c.alive = false;
+      }
+      while (c.trail.length && t - c.trail[0].t > TAIL) c.trail.shift();
+      if (!c.alive && !c.trail.length) { this.comets.splice(i, 1); continue; }
+      ctx.lineCap = 'round'; ctx.strokeStyle = rgb;
+      for (let j = 1; j < c.trail.length; j++) {
+        const a = c.trail[j - 1], b = c.trail[j], k = 1 - (t - b.t) / TAIL;   // 1 near the head, 0 at the tail end
+        ctx.globalAlpha = Math.max(0, k) * 0.9; ctx.lineWidth = (0.5 + 3.2 * k) * u;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+      if (c.alive) {
+        const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 9 * u); g.addColorStop(0, 'rgba(255,255,255,0.95)'); g.addColorStop(0.35, rgb); g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.globalAlpha = 0.9; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c.x, c.y, 9 * u, 0, TAU); ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+  },
+};
+
 function render(dt) {
   renderTime += dt;
   ctx.clearRect(0, 0, W, H);
@@ -1730,21 +2245,36 @@ function render(dt) {
   const inRunNow = G.state === 'play' || G.state === 'pause' || G.state === 'gameover';
   const themeX = { theme: inRunNow ? Theme.cur : DEFAULT_THEME };
   Assets.drawBackground(ctx, 'background.far',  W, H, G.bgScroll * pf[0], renderTime, themeX);
+  DECO.drawPlanets(ctx, W, H, renderTime, G.bgScroll, G.state === 'play');
   Assets.drawBackground(ctx, 'background.mid',  W, H, G.bgScroll * pf[1], renderTime, themeX);
+  DECO.drawDebris(ctx, W, H, renderTime, G.bgScroll, dt);
   Assets.drawBackground(ctx, 'background.near', W, H, G.bgScroll * pf[2], renderTime, themeX);
+  DECO.drawComets(ctx, W, H, renderTime, dt, G.state === 'play');
 
   if (inMenuScene() || G.state === 'launch') {
     // hangar + docked ship (the ship is drawn larger than in flight and bobs gently)
     const sw = W * CONFIG.ship.width * CONFIG.menu.shipScale;
     const padX = G.state === 'launch' ? G.launch.x0 : G.menuShip.x;
-    if (G.hangarY < H * 1.05) Assets.drawScene(ctx, 'hangar', W, H, G.hangarY, renderTime, { padX });
+    if (G.hangarY < H * 1.05) {
+      Assets.drawScene(ctx, 'hangar', W, H, G.hangarY, renderTime, { padX });
+      ctx.fillStyle = 'rgba(0,0,0,' + (CONFIG.menu.hangarDim + (G.state === 'hangar' ? 0.22 : 0)) + ')';   // veil slides away together with the hangar
+      ctx.fillRect(0, Math.max(0, G.hangarY), W, H);
+    }
     drawParticles();   // exhaust goes under the ship here
     if (G.state === 'launch') {
       const k = clamp(G.launch.t / CONFIG.menu.launchDuration, 0, 1);
       Assets.draw(ctx, G.skin.art.ship, G.ship.x, G.ship.y, lerp(sw, G.ship.w, easeInOut(k)), 0, renderTime);
     } else {
       const bob = Math.sin(renderTime * 2) * H * 0.006;
-      Assets.draw(ctx, currentSkin().art.ship, G.menuShip.x, G.menuShip.y + bob, sw, 0, renderTime);
+      if (G.state === 'hangar' && UI.hangarTab !== 'skins') { /* upgrades tab: the big badge is a DOM image */ }
+    else if (G.state === 'hangar') {   // shop: big preview ship on a soft pedestal glow
+        const sk = (UI.previewSkin && SKINS.find(s => s.id === UI.previewSkin)) || currentSkin(), swH = UI.shopShipWidth();
+        const gx = G.menuShip.x, gy = G.menuShip.y + swH * 0.7;
+        ctx.save(); ctx.translate(gx, gy); ctx.scale(1, 0.26);
+        const gr = ctx.createRadialGradient(0, 0, 0, 0, 0, swH * 0.95); gr.addColorStop(0, 'rgba(255,214,140,0.45)'); gr.addColorStop(1, 'rgba(255,214,140,0)');
+        ctx.fillStyle = gr; ctx.fillRect(-swH, -swH, swH * 2, swH * 2); ctx.restore();
+        Assets.draw(ctx, sk.art.ship, G.menuShip.x, G.menuShip.y + bob, swH, 0, renderTime);
+      } else Assets.draw(ctx, currentSkin().art.ship, G.menuShip.x, G.menuShip.y + bob, sw, 0, renderTime);
     }
     return;
   }
@@ -1796,7 +2326,7 @@ const UI = {
     for (const id of this.screens) $(id).classList.toggle('hidden', id !== state);
     $('hud').classList.toggle('hidden', !(state === 'play' || state === 'pause'));
     if (state === 'menu') { this.updateMenu(); for (const p of G.particles) p.active = false; }
-    if (state === 'hangar') this.renderHangar();
+    if (state === 'hangar') { this.hangarTab = 'skins'; this.renderHangar(); this.focusEquipped(); } else this.previewSkin = null;
     if (state === 'settings') this.renderSettings();
     if (state === 'pause') $('pauseHint').textContent = Input.mode === 'tilt' ? 'Hold the phone comfortably, then tap Recalibrate to set the neutral angle.' : 'Steering by touch drag (no tilt sensor available).';
   },
@@ -1808,14 +2338,14 @@ const UI = {
     const dist = Math.floor(G.distance);
     if (force || this.hudCache.lives !== G.lives) {
       let s = '';
-      for (let i = 0; i < G.maxLives; i++) s += i < G.lives ? '<span>♥</span>' : '<span class="lost">♥</span>';
+      for (let i = 0; i < G.maxLives; i++) s += '<img src="' + (i < G.lives ? ICONS.heart : ICONS.heartLost) + '" alt="">';
       $('hearts').innerHTML = s; this.hudCache.lives = G.lives;
     }
     if (force || this.hudCache.dist !== dist) { $('distance').textContent = dist + ' m'; this.hudCache.dist = dist; }
-    if (force || this.hudCache.junk !== G.runJunk) { $('runJunk').textContent = '⬡ ' + G.runJunk; this.hudCache.junk = G.runJunk; }
-    const buffs = [['◈ SHIELD', G.ship.shield], ['\u{1F9F2} MAGNET', G.ship.magnet], ['\u{1F680} ROCKETS', G.ship.rocket]]
-      .filter(b => b[1] > 0).map(b => b[0] + ' ' + Math.ceil(b[1]) + 's').join('  ');
-    if (force || this.hudCache.shield !== buffs) { $('shieldHud').textContent = buffs; this.hudCache.shield = buffs; }
+    if (force || this.hudCache.junk !== G.runJunk) { $('runJunk').innerHTML = '<img src="' + ICONS.junk + '" style="height:16px;width:16px;vertical-align:-3px"> ' + G.runJunk; this.hudCache.junk = G.runJunk; }
+    const buffs = [['shield', G.ship.shield], ['magnet', G.ship.magnet], ['rocket', G.ship.rocket]]
+      .filter(b => b[1] > 0).map(b => '<span style="display:inline-flex;align-items:center;gap:3px;margin:0 5px"><img src="' + ICONS[b[0]] + '" style="height:20px;width:20px">' + Math.ceil(b[1]) + 's</span>').join('');
+    if (force || this.hudCache.shield !== buffs) { $('shieldHud').innerHTML = buffs; this.hudCache.shield = buffs; }
   },
   pause(byLandscape) {
     if (G.state !== 'play') return;
@@ -1833,24 +2363,58 @@ const UI = {
     if (on) this.pause(true);
   },
   /* ---- Hangar ---- */
-  setHangarTab(tab) { this.hangarTab = tab; this.renderHangar(); },
+  setHangarTab(tab) { this.hangarTab = tab; $('hangarList').scrollLeft = 0; this.renderHangar(); if (tab === 'skins') this.focusEquipped(); },
+  previewSkin: null,
+  /** Free band of the shop screen (between the coin counter and the cards), measured from the real layout. */
+  shopArea() {
+    const el = document.querySelector('#hangar .hangarMid'); if (!el) return null;
+    const r = el.getBoundingClientRect(); if (r.height < 40) return null;
+    return { cx: W / 2, cy: r.top + r.height / 2, h: r.height };
+  },
+  /** Ship width for the shop: as big as the design wants, but never taller than the band (ship + flame are up to ~1.36x as tall as wide). */
+  shopShipWidth() {
+    const a = this.shopArea(), natural = W * CONFIG.ship.width * CONFIG.menu.hangarShipScale;
+    return a ? Math.min(natural, (a.h * 0.78 - 12) / 1.36) : natural;
+  },
   renderHangar() {
-    $('hangarJunk').textContent = Save.data.junk;
+    $('hangarJunk').textContent = Save.data.junk; $('hangarJunkIcon').src = ICONS.junk;
     $('tabSkins').classList.toggle('active', this.hangarTab === 'skins');
     $('tabUpgrades').classList.toggle('active', this.hangarTab === 'upgrades');
-    const list = $('hangarList'); list.innerHTML = '';
+    const list = $('hangarList'), keep = list.scrollLeft; list.dataset.tab = this.hangarTab; $('hangar').dataset.tab = this.hangarTab; list.innerHTML = '';
     if (this.hangarTab === 'skins') this.renderSkinRows(list); else this.renderUpgradeRows(list);
+    list.scrollLeft = keep;
+    this.onHangarScroll();
+  },
+  /** The card in the middle of the carousel decides which skin the big ship on top shows. */
+  onHangarScroll() {
+    const list = $('hangarList'), c = list.firstElementChild; if (!c) return;
+    const step = c.offsetWidth + 12, idx = Math.max(0, Math.min(list.children.length - 1, Math.round(list.scrollLeft / step)));
+    if (this.hangarTab === 'skins') { this.previewSkin = SKINS[idx].id; $('previewName').textContent = ''; /* the name is on the card */ }
+    else { this.previewSkin = null; $('previewName').textContent = ''; $('previewIcon').src = ICONS[UPGRADES[idx].id] || ''; }
+  },
+  focusEquipped() {
+    const list = $('hangarList'); if (this.hangarTab !== 'skins' || !list.firstElementChild) return;
+    list.scrollLeft = Math.max(0, SKINS.findIndex(s => s.id === Save.data.equipped)) * (list.firstElementChild.offsetWidth + 12);
+    this.onHangarScroll();
+  },
+  priceHtml(n) { return '<img src="' + ICONS.junk + '" alt="">' + n; },
+  makeCard(selected) {
+    const card = document.createElement('div'); card.className = 'card' + (selected ? ' selected' : '');
+    card.addEventListener('click', e => {
+      if (e.target.closest('button')) return;
+      const list = $('hangarList'), idx = Array.prototype.indexOf.call(list.children, card);
+      list.scrollTo({ left: idx * (card.offsetWidth + 12), behavior: 'smooth' });
+    });
+    return card;
   },
   renderSkinRows(list) {
     for (const skin of SKINS) {
       const owned = Save.data.owned.includes(skin.id), equipped = Save.data.equipped === skin.id;
-      const row = document.createElement('div'); row.className = 'row' + (equipped ? ' equipped' : '');
-      const head = document.createElement('div'); head.className = 'head';
-      const cv = document.createElement('canvas'); cv.width = 34 * Math.min(DPR, 2); cv.height = cv.width; cv.dataset.skin = skin.id;
+      const card = this.makeCard(equipped);
+      const cv = document.createElement('canvas'); cv.className = 'thumb'; cv.width = 170 * Math.min(DPR, 2); cv.height = 132 * Math.min(DPR, 2); cv.dataset.skin = skin.id;
       const name = document.createElement('div'); name.className = 'name'; name.textContent = skin.name;
-      const price = document.createElement('div'); price.className = 'price';
-      price.textContent = equipped ? 'Equipped' : owned ? 'Owned' : (skin.price === 0 ? 'Free' : '⬡ ' + skin.price);
-      head.append(cv, name, price);
+      const tag = document.createElement('div'); tag.className = 'tag';
+      if (equipped) tag.textContent = 'IN USE'; else if (owned) tag.textContent = 'OWNED'; else if (skin.price === 0) tag.textContent = 'FREE'; else tag.innerHTML = this.priceHtml(skin.price);
       const btn = document.createElement('button'); btn.className = 'btn' + (owned ? '' : ' secondary');
       if (equipped) { btn.textContent = 'EQUIPPED'; btn.disabled = true; }
       else if (owned) { btn.textContent = 'EQUIP'; btn.onclick = () => { Save.data.equipped = skin.id; Save.save(); Sfx.play('pickup'); this.renderHangar(); }; }
@@ -1863,26 +2427,24 @@ const UI = {
           Sfx.play('pickup'); this.renderHangar();
         };
       }
-      row.append(head, btn); list.appendChild(row);
+      card.append(name, tag, btn); list.appendChild(card);   // the big ship above is the preview
     }
     this.drawHangarPreviews();
   },
   renderUpgradeRows(list) {
     for (const up of UPGRADES) {
       const lvl = upgradeLevel(up.id), maxed = lvl >= up.tiers.length, next = maxed ? null : up.tiers[lvl];
-      const row = document.createElement('div'); row.className = 'row' + (lvl > 0 ? ' equipped' : '');
-      const head = document.createElement('div'); head.className = 'head';
-      const icon = document.createElement('div'); icon.style.cssText = 'font-size:22px;width:34px;text-align:center;color:var(--accent)'; icon.textContent = up.icon;
+      const card = this.makeCard(lvl > 0);
+      const icon = document.createElement('img'); icon.className = 'iconBig'; icon.alt = ''; icon.src = ICONS[up.id] || '';
       const name = document.createElement('div'); name.className = 'name'; name.textContent = up.name;
       const tiers = document.createElement('div'); tiers.className = 'tiers';
-      tiers.innerHTML = up.tiers.map((_, i) => i < lvl ? '●' : '<span class="off">●</span>').join('');
-      head.append(icon, name, tiers);
+      tiers.innerHTML = up.tiers.map((_, i) => '<img src="' + (i < lvl ? ICONS.dotOn : ICONS.dotOff) + '" alt="">').join('');
       const desc = document.createElement('div'); desc.className = 'desc';
-      desc.textContent = up.describe(lvl) + (maxed ? ' · MAX' : ' → Next: ' + up.next(lvl));
+      desc.textContent = noWidow(up.describe(lvl) + (maxed ? ' · MAX' : ' → ' + up.next(lvl)));
       const btn = document.createElement('button'); btn.className = 'btn' + (maxed ? '' : ' secondary');
       if (maxed) { btn.textContent = 'MAXED'; btn.disabled = true; }
       else {
-        btn.textContent = 'BUY · ⬡ ' + next.price;
+        btn.innerHTML = 'BUY · ' + this.priceHtml(next.price);
         btn.disabled = Save.data.junk < next.price;
         btn.onclick = () => {
           if (Save.data.junk < next.price) return;
@@ -1890,7 +2452,7 @@ const UI = {
           Sfx.play('shield'); this.renderHangar();
         };
       }
-      row.append(head, desc, btn); list.appendChild(row);
+      card.append(name, tiers, desc, btn); list.appendChild(card);   // the badge is shown big above
     }
   },
   drawHangarPreviews() {
@@ -1898,7 +2460,7 @@ const UI = {
     for (const cv of cvs) {
       const skin = SKINS.find(s => s.id === cv.dataset.skin); if (!skin) continue;
       const c2 = cv.getContext('2d'); c2.clearRect(0, 0, cv.width, cv.height);
-      Assets.draw(c2, skin.art.ship, cv.width / 2, cv.height / 2, cv.width * 0.55, 0, renderTime);
+      Assets.draw(c2, skin.art.ship, cv.width / 2, cv.height / 2, cv.width * 0.56, 0, renderTime);
     }
   },
   /* ---- Settings ---- */
@@ -1907,6 +2469,7 @@ const UI = {
     $('sensVal').textContent = Save.data.settings.sensitivity.toFixed(1) + '×';
     $('muteVal').textContent = Save.data.settings.muted ? 'Off' : 'On';
     $('btnMute').textContent = Save.data.settings.muted ? 'UNMUTE' : 'MUTE';
+    setTimeout(() => { const n = $('steerInfo'); n.textContent = noWidow(n.textContent); }, 0);
     $('steerInfo').textContent = Input.hasTilt ? 'Tilt sensor active.' : (Input.needsPermission() && Save.data.tiltPermission !== 'granted' ? 'Tilt permission will be requested when you start a run.' : 'No tilt data yet — touch drag is used as fallback.');
   },
   /* ---- Debug ---- */
@@ -1921,6 +2484,7 @@ const UI = {
   },
   bind() {
     const on = (id, fn) => $(id).addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); Sfx.unlock(); fn(e); });
+    $('hangarList').addEventListener('scroll', () => this.onHangarScroll(), { passive: true });
     // any tap on the menu that is not a button launches the run
     $('menu').addEventListener('click', e => { if (e.target.closest('button')) return; Sfx.unlock(); this.onPlay(); });
     on('btnAgain', () => this.onPlay(true));
@@ -2036,7 +2600,7 @@ function boot() {
   document.addEventListener('dblclick', e => e.preventDefault());
   document.addEventListener('contextmenu', e => e.preventDefault());
 
-  Assets.init().then(() => requestAnimationFrame(frame));
+  Assets.init().then(() => { DECO.init(); Plates.init(); requestAnimationFrame(frame); });
 }
 boot();
 </script>
