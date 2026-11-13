@@ -452,8 +452,8 @@ const CONFIG = {
     width: 0.11,                  // w
     extraSpeed: 0.11,             // sh/s added to scroll speed
     firstSpawn: [6, 10],          // seconds into the run
-    intervalStart: 9,             // average seconds between enemies at start
-    intervalMin: 4,               // never more than 1 per 4 s
+    intervalStart: 6,             // average seconds between enemies at start
+    intervalMin: 3,               // never more than 1 per 4 s
     weaveAmp: 0.06,               // w
     weaveFreq: 0.9,               // Hz
     junkDrop: 5,
@@ -549,10 +549,10 @@ const CONFIG = {
 /* Skins — cosmetic only. Art keys point into the ASSETS manifest. */
 const SKINS = [
   { id: 'scout',    name: 'Scout',    price: 0,   art: { ship: 'ship.scout',    bullet: '#8fd6ff', trail: '#4aa8ff' } },
-  { id: 'ember',    name: 'Ember',    price: 50,  art: { ship: 'ship.ember',    bullet: '#ffb14a', trail: 'fire' } },
-  { id: 'viridian', name: 'Viridian', price: 120, art: { ship: 'ship.viridian', bullet: '#b8ff3c', trail: '#4dff88' } },
-  { id: 'phantom',  name: 'Phantom',  price: 200, art: { ship: 'ship.phantom',  bullet: '#c58bff', trail: '#9b4dff' } },
-  { id: 'aurum',    name: 'Aurum',    price: 350, art: { ship: 'ship.aurum',    bullet: '#ffd84f', trail: '#ffb300' } },
+  { id: 'ember',    name: 'Ember',    price: 100,  art: { ship: 'ship.ember',    bullet: '#ffb14a', trail: 'fire' } },
+  { id: 'viridian', name: 'Viridian', price: 200, art: { ship: 'ship.viridian', bullet: '#b8ff3c', trail: '#4dff88' } },
+  { id: 'phantom',  name: 'Phantom',  price: 300, art: { ship: 'ship.phantom',  bullet: '#c58bff', trail: '#9b4dff' } },
+  { id: 'aurum',    name: 'Aurum',    price: 400, art: { ship: 'ship.aurum',    bullet: '#ffd84f', trail: '#ffb300' } },
   { id: 'nova',     name: 'Nova',     price: 500, art: { ship: 'ship.nova',     bullet: '#ffffff', trail: 'rainbow' } },
 ];
 
@@ -561,13 +561,13 @@ const SKINS = [
 const UPGRADES = [
   {
     id: 'lives', name: 'Extra Lives', icon: '♥',
-    tiers: [{ price: 150, lives: 1 }, { price: 450, lives: 2 }, { price: 1200, lives: 3 }],
+    tiers: [{ price: 150, lives: 1 }, { price: 350, lives: 2 }, { price: 800, lives: 3 }],
     describe: lvl => `${CONFIG.ship.lives + lvl} lives per run`,
     next: lvl => `+1 life (${CONFIG.ship.lives + lvl + 1} total)`,
   },
   {
     id: 'shield', name: 'Shield', icon: '◈',
-    tiers: [{ price: 200, duration: 3 }, { price: 600, duration: 5 }, { price: 1500, duration: 8 }],
+    tiers: [{ price: 200, duration: 3 }, { price: 400, duration: 5 }, { price: 1000, duration: 8 }],
     describe: lvl => lvl === 0 ? 'No shield pickups yet' : `Shield pickups last ${UPGRADES[1].tiers[lvl - 1].duration} s`,
     next: lvl => lvl === 0 ? `Shield pickups appear: ${UPGRADES[1].tiers[0].duration} s of invulnerability` : `Shield lasts ${UPGRADES[1].tiers[lvl].duration} s`,
   },
@@ -579,19 +579,19 @@ const UPGRADES = [
   },
   {
     id: 'magnet', name: 'Magnet', icon: '\u{1F9F2}',
-    tiers: [{ price: 250, duration: 4 }, { price: 700, duration: 7 }, { price: 1600, duration: 11 }],
+    tiers: [{ price: 150, duration: 4 }, { price: 450, duration: 7 }, { price: 1000, duration: 11 }],
     describe: lvl => lvl === 0 ? 'No magnet pickups yet' : `Magnet pickups last ${tiersOf('magnet')[lvl - 1].duration} s`,
     next: lvl => lvl === 0 ? `Magnet pickups appear: junk flies to you for ${tiersOf('magnet')[0].duration} s` : `Magnet lasts ${tiersOf('magnet')[lvl].duration} s`,
   },
   {
     id: 'rocket', name: 'Rockets', icon: '\u{1F680}',
-    tiers: [{ price: 400, duration: 3 }, { price: 1000, duration: 5 }, { price: 2400, duration: 7 }],
+    tiers: [{ price: 400, duration: 3 }, { price: 800, duration: 5 }, { price: 1200, duration: 7 }],
     describe: lvl => lvl === 0 ? 'No rocket pickups yet' : `Rocket pickups last ${tiersOf('rocket')[lvl - 1].duration} s`,
     next: lvl => lvl === 0 ? `Rocket pickups appear: ${tiersOf('rocket')[0].duration} s of rockets that one-shot enemies and break asteroids` : `Rockets last ${tiersOf('rocket')[lvl].duration} s`,
   },
   {
     id: 'rareJunk', name: 'Rare Junk', icon: '\u{1F48E}',
-    tiers: [{ price: 300, chance: 0.08 }, { price: 900, chance: 0.16 }, { price: 2000, chance: 0.25 }],
+    tiers: [{ price: 300, chance: 0.08 }, { price: 600, chance: 0.16 }, { price: 1200, chance: 0.25 }],
     describe: lvl => lvl === 0 ? 'All junk is ordinary' : `${Math.round(tiersOf('rareJunk')[lvl - 1].chance * 100)}% of junk is rare (worth ${CONFIG.junk.rare.value})`,
     next: lvl => `${Math.round(tiersOf('rareJunk')[lvl].chance * 100)}% of junk becomes rare (worth ${CONFIG.junk.rare.value} each)`,
   },
