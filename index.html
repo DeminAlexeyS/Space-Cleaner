@@ -461,16 +461,22 @@ const CONFIG = {
     flashTime: 0.12,
   },
   serpent: {
-    width: 0.3,              // w — body width; the sprite is tall/vertical, height follows the art's aspect
+    width: 0.09,              // w — body width; the sprite is tall/vertical, height follows the art's aspect
     aspect: 3.4,              // placeholder height in body widths (an image variant uses its own aspect)
     extraSpeed: 0.5,          // sh/s added to scroll — much faster than the basic enemy
     startDistance: 500,       // m — serpents only appear from this distance on
-    intervalMult: 1.7,        // spawns 2-3x less often than the basic enemy (its interval x this)
-    warnTime: 1.8,            // s of flashing warning at the spawn column before it enters
+    intervalMult: 2.5,        // spawns 2-3x less often than the basic enemy (its interval x this)
+    warnTime: 1.0,            // s of flashing warning at the spawn column before it enters
     warnY: 0.12,              // warning sign vertical position (fraction of H)
-    warnWidth: 0.12,          // warning sign width (w)
-    hitbox: 0.8,              // capsule radius as a fraction of body width
+    warnWidth: 0.09,          // warning sign width (w)
+    hitbox: 0.7,              // capsule radius as a fraction of body width
     keys: ['serpent'],        // art variants; add 'serpent2', ... here when the artist delivers more designs
+  },
+  life: {
+    pickupWidth: 0.06,        // w
+    startDistance: 1000,      // m — extra-life hearts only appear from this distance on
+    minGap: 400,              // m — never more than one heart per 0.4 km
+    gapJitter: 250,           // m of extra randomness added to each gap (and to the first heart)
   },
   junk: {
     width: 0.05,                  // w
@@ -803,6 +809,27 @@ function drawWarning(ctx, s, t, extra) {
   ctx.fill();
   ctx.beginPath(); ctx.arc(0, r * 0.52, s * 0.085, 0, TAU); ctx.fill();
   ctx.globalAlpha = 1;
+}
+
+/** Extra-life pickup: the same heart as the life counter, on a soft pulsing red glow. */
+function drawLifePickup(ctx, s, t) {
+  const r = s * 0.95 * (0.85 + 0.15 * Math.sin(t * 5));
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+  g.addColorStop(0, 'rgba(255,90,120,0.5)'); g.addColorStop(1, 'rgba(255,90,120,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill();
+  const img = Assets.images['pickup.life.img'];
+  if (img && img.width) {
+    const h = s * img.height / img.width;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, -s / 2, -h / 2, s, h);
+  } else {   // fallback heart if the HUD art is missing
+    ctx.fillStyle = '#ff4f6e'; ctx.strokeStyle = '#ffd3dc'; ctx.lineWidth = Math.max(1, s * 0.06);
+    ctx.beginPath();
+    ctx.moveTo(0, s * 0.42);
+    ctx.bezierCurveTo(-s * 0.55, s * 0.05, -s * 0.38, -s * 0.42, 0, -s * 0.12);
+    ctx.bezierCurveTo(s * 0.38, -s * 0.42, s * 0.55, s * 0.05, 0, s * 0.42);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
 }
 
 function drawJunk(ctx, s) {
@@ -1196,6 +1223,8 @@ const ASSETS = {
   'enemy': { type: 'image', src: ART['enemy'], anchor: { x: 0.5, y: 0.5 } },
   'serpent': { type: 'procedural', draw: drawSerpent },   // robot-snake placeholder; make it an image entry when the designs land
   'warning': { type: 'procedural', draw: drawWarning },
+  'pickup.life': { type: 'procedural', draw: drawLifePickup },                          // glow + the HUD heart below
+  'pickup.life.img': { type: 'image', src: ICONS.heart, anchor: { x: 0.5, y: 0.5 } },   // preloads the heart for the pickup
   'junk': { type: 'image', src: ART['junk'], anchor: { x: 0.5, y: 0.5 } },
   'bullet': { type: 'procedural', draw: drawBullet },
   'pickup.shield': { type: 'image', src: ART['pickup.shield'], anchor: { x: 0.5, y: 0.5 } },
@@ -1422,6 +1451,14 @@ const SOUNDS = {
       g.gain.setValueAtTime(0.0001, ac.currentTime + d); g.gain.linearRampToValueAtTime(0.14, ac.currentTime + d + 0.01);
       g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + d + 0.12);
       o.connect(g).connect(out); o.start(ac.currentTime + d); o.stop(ac.currentTime + d + 0.13);
+    });
+  } },
+  extraLife: { type: 'procedural', play(ac, out) {   // heart collected: warm rising chime
+    [[523, 0], [659, 0.08], [784, 0.16], [1047, 0.24]].forEach(([fq, d]) => {
+      const o = ac.createOscillator(), g = ac.createGain(); o.type = 'triangle'; o.frequency.value = fq;
+      g.gain.setValueAtTime(0.0001, ac.currentTime + d); g.gain.linearRampToValueAtTime(0.16, ac.currentTime + d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + d + 0.25);
+      o.connect(g).connect(out); o.start(ac.currentTime + d); o.stop(ac.currentTime + d + 0.26);
     });
   } },
   shield: { type: 'procedural', play(ac, out) {
@@ -1665,7 +1702,7 @@ const G = {
   ship: { x: 0, y: 0, w: 0, invuln: 0, shield: 0, magnet: 0, rocket: 0, slow: 0, fireTimer: 0, dead: false, deathTimer: 0 },
   skin: SKINS[0],
   bullets: [], asteroids: [], enemies: [], serpents: [], warnings: [], junk: [], pickups: [], particles: [],
-  spawn: { asteroidTimer: 0, enemyTimer: 0, junkTimer: 0, shieldTimer: 0, magnetTimer: 0, rocketTimer: 0, serpentTimer: 0 },
+  spawn: { asteroidTimer: 0, enemyTimer: 0, junkTimer: 0, shieldTimer: 0, magnetTimer: 0, rocketTimer: 0, serpentTimer: 0, lifeAt: 0 },
   // hangar scene (menus) and launch transition
   hangarY: 0,              // 0 = docked, H = slid off the bottom
   menuShip: { x: 0, y: 0 },
@@ -1735,6 +1772,7 @@ function resetRun() {
   G.spawn.rocketTimer = rand(CONFIG.rocket.firstSpawn[0], CONFIG.rocket.firstSpawn[1]);
   G.serpents.length = 0; G.warnings.length = 0;
   G.spawn.serpentTimer = rand(2, 5);   // first serpent warning comes a few seconds after the startDistance mark
+  G.spawn.lifeAt = CONFIG.life.startDistance + rand(0, CONFIG.life.gapJitter);   // earliest distance for the first extra-life heart
   Theme.reset();
   Input.calibrate();
   Input.consumeTouchDelta();
@@ -1940,6 +1978,11 @@ function updateSpawner(dt) {
         s.serpentTimer = avg * rand(0.8, 1.3);
       } else s.serpentTimer = 0.5;
     }
+  }
+  // extra-life hearts - rare, and only while a life is actually missing
+  if (G.distance >= s.lifeAt && G.lives < G.maxLives) {
+    if (spawnPickup('life')) s.lifeAt = G.distance + CONFIG.life.minGap + rand(0, CONFIG.life.gapJitter);
+    // blocked by asteroids: simply retried on the next frame
   }
   // loose junk
   s.junkTimer -= dt;
@@ -2217,6 +2260,11 @@ function update(dt) {
         sh.rocket = rocketDuration();
         Sfx.play('powerup');
         emitParticle(sh.x, sh.y, 0, 0, 0.4, sh.w * 1.5, '#ffb14a', true);
+      } else if (p.kind === 'life') {
+        G.lives = Math.min(G.maxLives, G.lives + 1);
+        Sfx.play('extraLife');
+        emitParticle(sh.x, sh.y, 0, 0, 0.45, sh.w * 1.5, '#ff7d95', true);
+        for (let k = 0; k < 8; k++) emitParticle(sh.x, sh.y, rand(-0.2, 0.2) * W, rand(-0.25, 0) * H, 0.4, sh.w * 0.12, '#ff4f6e', false);
       }
       UI.updateHud(true);
     }
